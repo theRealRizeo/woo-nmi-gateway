@@ -1,0 +1,123 @@
+ul.paymentMethods {
+    list-style:none;
+    margin-left:0;
+}
+
+ul.paymentMethods li, .bng-form-group {
+    width:100%;
+    margin-bottom:5px;
+    background-color:#FDFDFD;
+    border:1px solid #CCCCCC;
+}
+
+ul.paymentMethods li {
+    padding: 10px;
+    height: 75px;
+}
+
+.bng-form-group { 
+    padding:30px;
+}
+
+ul.paymentMethods li.active, .bng-form-group.active {
+    border:3px solid #333333;
+}
+
+ul.paymentMethods li label {
+    width:100%;
+    display:block;
+    clear: both;
+}
+
+.savedPms {
+    display: none;
+}
+
+.showPmSaveLater {
+    display: none;
+}
+
+.cc_exp {
+    background-color: #f2f2f2;
+    padding: 9.88875px;
+    width: 195px;
+}
+
+.cc_label {
+    width: 46%;
+}
+
+.cc_row {
+    display: flex;
+    margin-bottom: 12px;
+}
+
+.cc {
+    width:64px;
+    height:40px;
+    float:right;
+    background-repeat:no-repeat;
+    background-size:contain;
+    background-position:center center;
+}
+
+.detailsDiv {
+    float: left;
+}
+
+#bng_payButton,
+.bng_buttons {
+    width: 100%;
+}
+
+.bng_buttons {
+    display: flex;
+    justify-content: center;
+    margin-top: 2%;
+}
+
+.bng_checkboxes {
+    width: 24%;
+    margin-left: 2%;
+}
+
+#bng_submitButton {
+    width: 46%;
+    margin-left: 15px;
+}
+
+#bng_backButton {
+    width: 46%;
+}
+
+.preferred_payment_method {
+    margin-bottom: 1.41575em;
+    display: flex;
+}
+
+.preferred_payment_method p {
+    margin-bottom: 0;
+}
+
+.preferred_payment_method label {
+    margin-left: 2%;
+    display: inline-block;
+}
+
+.cc_row.ach_type,
+.cc_row.ach_type_extra,
+.savePmLater {
+    display: none;
+}
+
+.bngg_required:before {
+    content:"* ";
+    color: red;
+}
+
+.bng_spinner {
+    display:none;
+    float:left;
+    padding-top:10px;
+    margin-left:15px;
+}
