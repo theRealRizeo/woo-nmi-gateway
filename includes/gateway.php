@@ -217,14 +217,10 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		if ( $this->description ) {
             echo wpautop( wp_kses_post( $this->description ) );
         }
-		if ( isset( $_GET['pay_for_order'] ) && ! empty( $_GET['key'] ) ) {
-			$this->process_inline_order( wc_clean( $wp->query_vars['order-pay'] ) );
+		if ( $this->apikey && $this->tokenizationkey ) {
+			$this->collect_js_form();
 		} else {
-			if ( $this->apikey && $this->tokenizationkey ) {
-				$this->collect_js_form();
-			} else {
-				$this->form();
-			}
+			$this->form();
 		}
 		echo '</div>';
 	}
@@ -275,18 +271,17 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 
 	public function payment_scripts() {
-		if ( ! $this->api_keys || ! $this->public_key || ( ! is_cart() && ! is_checkout() && ! isset( $_GET['pay_for_order'] ) && ! is_add_payment_method_page() ) ) {
+		if ( ! $this->tokenizationkey || ! $this->apikey || ( ! is_cart() && ! is_checkout() && ! isset( $_GET['pay_for_order'] ) && ! is_add_payment_method_page() ) ) {
 			return;
 		}
 
         add_filter( 'script_loader_tag', array( $this, 'add_public_key_to_js' ), 10, 2 );
 
 		wp_enqueue_script( 'nmi-collect-js', 'https://secure.nmi.com/token/Collect.js', '', null, true );
-		wp_enqueue_script( 'wc_nmi_checkout', NMI_WOO_PLUGIN_URL. 'js/checkout.js' , array( 'jquery-payment', 'nmi-collect-js' ), WC_NMI_PCI_VERSION, true );
+		wp_enqueue_script( 'wc_nmi_checkout', NMI_WOO_PLUGIN_URL. 'js/checkout.js' , array( 'jquery-payment', 'nmi-collect-js' ), '1.0.0', true );
 
 		$nmi_params = array(
-			'public_key'           	=> $this->public_key,
-			'allowed_card_types'   	=> $this->allowed_card_types,
+			'public_key'           	=> $this->apikey,
 			'i18n_terms'           	=> __( 'Please accept the terms and conditions first' ),
 			'i18n_required_fields'	=> __( 'Please fill in required checkout fields first' ),
             'card_disallowed_error' => __( 'Card Type Not Accepted.' ),
@@ -303,10 +298,23 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		wp_localize_script( 'wc_nmi_checkout', 'wc_nmi_checkout_params', apply_filters( 'wc_nmi_checkout_params', $nmi_params ) );
 	}
 
-
+	/**
+	 * Add the public key to the src
+	 */
 	public function add_public_key_to_js( $tag, $handle ) {
 		if ( 'nmi-collect-js' !== $handle ) return $tag;
 		return str_replace( ' src', ' data-tokenization-key="' . $this->tokenizationkey . '" src', $tag );
+	}
+
+	/**
+	 * Process the nmi response
+	 */
+	public function get_nmi_js_response() {
+        if( !isset( $_POST['nmi_js_response'] ) ) {
+            return false;
+        }
+		$response = json_decode( stripslashes( $_POST['nmi_js_response'] ), 1 );
+		return $response;
 	}
 
 	/**
@@ -1069,33 +1077,232 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 * @param string $order_id - the order id
 	 */
 	function process_payment( $order_id ) {
-		// get woo version
-		if ( class_exists( 'WooCommerce' ) ) {
-			global $woocommerce;
-			$woo_version = $woocommerce->version;
-		} else {
-			$woo_version = 'old';
+		$order     	= wc_get_order( $order_id );
+		$order_key 	= $order->get_order_key();
+
+		$token_id 	= isset( $_POST['wc-nmi-payment-token'] ) ? wc_clean( $_POST['wc-nmi-payment-token'] ) : '';
+
+		// Use NMI CURL API for payment
+		try {
+			$post_data = array();
+			$payment_args = array();
+
+			if( !$this->get_nmi_js_response() ) {
+
+				// Check for CC details filled or not
+				if ( empty( $_POST['nmi-card-number'] ) || empty( $_POST['nmi-card-expiry'] ) || empty( $_POST['nmi-card-cvc'] ) ) {
+					throw new Exception( __( 'Credit card details cannot be left incomplete.', 'wc-nmi' ) );
+				}
+			}
+
+			if( $js_response = $this->get_nmi_js_response() ) {
+				$post_data['payment_token'] = $js_response['token'];
+			} else {
+				$expiry = explode( ' / ', wc_clean( $_POST['nmi-card-expiry'] ) );
+				$expiry[1] = substr( $expiry[1], -2 );
+				$post_data['ccnumber']	= wc_clean( $_POST['nmi-card-number'] );
+				$post_data['ccexp']		= $expiry[0] . $expiry[1];
+				$post_data['cvv']		= wc_clean( $_POST['nmi-card-cvc'] );
+			}
+
+			$description = sprintf( __( '%s - Order %s', 'wc-nmi' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $order->get_order_number() );
+
+			if( $this->line_items ) {
+				$description .= ' (' . $this->get_line_items( $order ) . ')';
+			}
+
+			$payment_args = array(
+				'orderid'	 		=> $order->get_order_number(),
+				'order_description'	=> $description,
+				'amount'			=> $order->get_total(),
+				'transactionid'		=> $order->get_transaction_id(),
+				'type'				=> $this->transactiontype,
+				'first_name'		=> $order->get_billing_first_name(),
+				'last_name'			=> $order->get_billing_last_name(),
+				'address1'			=> $order->get_billing_address_1(),
+				'address2'			=> $order->get_billing_address_2(),
+				'city'				=> $order->get_billing_city(),
+				'state'				=> $order->get_billing_state(),
+				'country'			=> $order->get_billing_country(),
+				'zip'				=> $order->get_billing_postcode(),
+				'email' 			=> $order->get_billing_email(),
+				'phone'				=> $order->get_billing_phone(),
+				'company'			=> $order->get_billing_company(),
+				'currency'			=> $this->get_payment_currency( $order_id ),
+			);
+
+			$payment_args = array_merge( $payment_args, $post_data );
+
+			$payment_args = apply_filters( 'wc_nmi_request_args', $payment_args, $order );
+
+			$response = $this->remote_request( $payment_args );
+
+			if ( is_wp_error( $response ) ) {
+				throw new Exception( $response->get_error_message() );
+			}
+
+			// Store charge ID
+			$order->update_meta_data( '_nmi_charge_id', $response['transactionid'] );
+
+			if ( $response['response'] == 1 ) {
+				$order->set_transaction_id( $response['transactionid'] );
+
+				if( $payment_args['type'] == 'sale' ) {
+
+					// Store captured value
+					$order->update_meta_data( '_nmi_charge_captured', 'yes' );
+					$order->update_meta_data( 'NMI Payment ID', $response['transactionid'] );
+
+					// Payment complete
+					$order->payment_complete( $response['transactionid'] );
+
+					// Add order note
+					$complete_message = sprintf( __( 'NMI charge complete (Charge ID: %s)', 'wc-nmi' ), $response['transactionid'] );
+					$order->add_order_note( $complete_message );
+
+				} else {
+
+					// Store captured value
+					$order->update_meta_data( '_nmi_charge_captured', 'no' );
+
+					if ( $order->has_status( array( 'pending', 'failed' ) ) ) {
+						wc_reduce_stock_levels( $order_id );
+					}
+
+					// Mark as on-hold
+					$authorized_message = sprintf( __( 'NMI charge authorized (Charge ID: %s). Process order to take payment, or cancel to remove the pre-authorization.', 'wc-nmi' ), $response['transactionid'] );
+					$order->update_status( 'on-hold', $authorized_message );
+				}
+
+				$order->save();
+
+			}
+
+			// Remove cart
+			WC()->cart->empty_cart();
+
+			do_action( 'wc_gateway_nmi_process_payment', $response, $order );
+
+			// Return thank you page redirect
+			return array(
+				'result'   => 'success',
+				'redirect' => $this->get_return_url( $order )
+			);
+
+		} catch ( Exception $e ) {
+			wc_add_notice( sprintf( __( 'Gateway Error: %s', 'wc-nmi' ), $e->getMessage() ), 'error' );
+			$this->logger->handle( time(), 'error', sprintf( __( 'Gateway Error: %s', 'wc-nmi' ), $e->getMessage() ), array() );
+
+			if( is_wp_error( $response ) && $response = $response->get_error_data() ) {
+                $order->add_order_note( sprintf( __( 'NMI failure reason: %s', 'wc-nmi' ), $response['response_code'] . ' - ' . $response['responsetext'] ) );
+            }
+
+			do_action( 'wc_gateway_nmi_process_payment_error', $e, $order );
+
+			$order->update_status( 'failed' );
+
+			return array(
+				'result'   => 'fail',
+				'redirect' => ''
+			);
+
+		}
+	}
+
+
+	/**
+	 * Get payment currency, either from current order or WC settings
+	 *
+	 * @return string three-letter currency code
+	 */
+	function get_payment_currency( $order_id = false ) {
+		$currency = get_woocommerce_currency();
+	   	$order_id = ! $order_id ? $this->get_checkout_pay_page_order_id() : $order_id;
+
+		// Gets currency for the current order, that is about to be paid for
+		if ( $order_id ) {
+			$order    = wc_get_order( $order_id );
+			$currency = $order->get_currency();
+		}
+		return $currency;
+	}
+
+	function remote_request( $args ) {
+
+		$gateway_debug = ( $this->logging && $this->debugging );
+
+        $request_url = 'https://secure.networkmerchants.com/api/transact.php';
+
+        $auth_params = array( 'security_key' => $this->apikey );
+
+		$args['customer_receipt'] = isset( $args['customer_receipt'] ) ? $args['customer_receipt'] : true;
+		$args['ipaddress'] = isset( $args['ipaddress'] ) ? $args['ipaddress'] : WC_Geolocation::get_ip_address();
+
+        if( isset( $args['transactionid'] ) && empty( $args['transactionid'] ) ) {
+            unset( $args['transactionid'] );
+        }
+
+        if( isset( $args['currency'] ) && empty( $args['currency'] ) ) {
+            $args['currency'] = get_woocommerce_currency();
+        }
+
+        if( isset( $args['state'] ) && empty( $args['state'] ) && ! in_array( $args['type'], array( 'capture', 'void', 'refund' ) ) ) {
+            $args['state'] = 'NA';
+        }
+
+        $args = array_merge( $args, $auth_params );
+
+        // Setting custom timeout for the HTTP request
+		add_filter( 'http_request_timeout', array( $this, 'http_request_timeout' ), 9999 );
+
+        //$headers = array( 'Content-Type' => 'application/json' );
+        $headers = array();
+        $response = wp_remote_post( $request_url, array( 'body' => $args , 'headers' => $headers ) );
+
+		$result = is_wp_error( $response ) ? $response : wp_remote_retrieve_body( $response );
+
+        // Saving to Log here
+		if( $gateway_debug ) {
+			$message = sprintf( "\nPosting to: \n%s\nRequest: \n%sResponse: \n%s", $request_url, print_r( $args, 1 ), print_r( $result, 1 ) );
 		}
 
-		$order     = wc_get_order( $order_id );
-		$order_key = $order->get_order_key();
+		remove_filter( 'http_request_timeout', array( $this, 'http_request_timeout' ), 9999 );
 
-		if ( empty( $order->get_payment_method() ) ) {
-			$order->set_payment_method( $this );
-			$order->save();
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		} elseif( empty( $result ) ) {
+			return new WP_Error( 'invalid_response', __( 'There was an error with the gateway response.', 'wc-nmi' ) );
 		}
 
-		// get redirect url based on the version
-		if ( $woo_version == 'old' ) {
-			$redirect = add_query_arg( 'order', $order->get_id(), add_query_arg( 'key', $order_key, get_permalink( get_option( 'woocommerce_pay_page_id' ) ) ) );
-		} else {
-			$redirect = $order->get_checkout_payment_url( true );
+        parse_str( $result, $result );
+
+        if( count( $result ) < 8 ) {
+            return new WP_Error( 'invalid_response', sprintf( __( 'Unrecognized response from the gateway: %s', 'wc-nmi' ), $response ) );
+        }
+
+        if( !isset( $result['response'] ) || !in_array( $result['response'], array( 1, 2, 3 ) ) ) {
+            return new WP_Error( 'invalid_response', __( 'There was an error with the gateway response.', 'wc-nmi' ) );
+        }
+
+        if( $result['response'] == 2 ) {
+            return new WP_Error( 'decline_response', '<!-- Error: ' . $result['response_code'] . ' --> ' . __( 'Your card has been declined.', 'wc-nmi' ), $result );
 		}
 
-		return array(
-			'result'   => 'success',
-			'redirect' => $redirect,
-		);
+        if( $result['response'] == 3 ) {
+            return new WP_Error( 'error_response', '<!-- Error: ' . $result['response_code'] . ' --> ' . $result['responsetext'], $result );
+		}
+
+        return $result;
+
+	}
+
+	function get_line_items( $order ) {
+		$line_items = array();
+		// order line items
+		foreach ( $order->get_items() as $item ) {
+			$line_items[] = $item->get_name() . ' x ' .$item->get_quantity();
+		}
+		return implode( ', ', $line_items );
 	}
 
 	/**
