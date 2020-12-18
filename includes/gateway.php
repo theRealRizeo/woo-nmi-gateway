@@ -1095,12 +1095,13 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 					);
 
 					// use wp function to handle curl calls
-					$response = wp_remote_post( NMI_Config::$pluginUrl, $args );
+					$resp = wp_remote_post( NMI_Config::$pluginUrl, $args );
 
-					if ( !is_wp_error( $response ) ) {
-						$xml    = simplexml_load_string( $response['body'], 'SimpleXMLElement', LIBXML_NOCDATA );
+					if ( !is_wp_error( $resp ) ) {
+						$xml    = simplexml_load_string( $resp['body'], 'SimpleXMLElement', LIBXML_NOCDATA );
 						$json   = json_encode( $xml );
 						$result = json_decode( $json, true );
+						WC_NMI_Logger::log( $json );
 					}
 				}
 				$order->save();
