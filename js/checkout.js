@@ -45,7 +45,8 @@ jQuery( function( $ ) {
                 },
                 "timeoutDuration" : 20000,
                 "timeoutCallback" : function () {
-                    $( document ).trigger( 'nmiError', wc_nmi_checkout_params.timeout_error );
+					$( document ).trigger( 'nmiError', wc_nmi_checkout_params.timeout_error );
+					console.log( wc_nmi_checkout_params.timeout_error );
                 },
                 "fieldsAvailableCallback" : function () {
                     wc_nmi_checkout.unblock();
@@ -69,7 +70,7 @@ jQuery( function( $ ) {
 
 			$( 'form.woocommerce-checkout' )
 				.on(
-					'checkout_place_order_nmi',
+					'checkout_place_order_nmi checkout_place_order_nmi_gateway',
 					this.onSubmit
 				);
 
