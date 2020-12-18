@@ -82,6 +82,7 @@ if ( function_exists( 'ngfw_fs' ) ) {
 				// Include the WooCommerce Custom Payment Gateways classes.
 				require_once plugin_dir_path( __FILE__ ) . 'includes/config.php';
 				require_once plugin_dir_path( __FILE__ ) . 'includes/logger.php';
+				require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
 				require_once plugin_dir_path( __FILE__ ) . 'includes/gateway.php';
 			}
 		}
