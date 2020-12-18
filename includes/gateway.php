@@ -754,6 +754,21 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		woo_nmi_complete_order( $order, $orderStatus, $result, $trans_type, $this, $acctScreen );
 	}
 
+
+	function complete_js_request( $token ) {
+		if ( get_current_user_id() > 0 ) {
+			$paymentTokens 	= WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
+			$oldPm     		= $paymentTokens[ $woo_token ];
+			$billingId 		= $oldPm->get_token();
+			$vaultId   		= $oldPm->get_meta( 'vaultid' );
+
+			// means user is trying to change payment method
+			if ( function_exists( 'wcs_is_subscription' ) && wcs_is_subscription( $order_id ) && $orderTotal == 0 ) {
+				woo_nmi_update_paymentmethod_subscription( $oldPm, $order, $billingId );
+			}
+		}
+	}
+
 	/**
 	 * Submits order using collect js payment token key
 	 */
@@ -1007,6 +1022,11 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			if ( $response['response'] == 1 ) {
 				$order->set_transaction_id( $response['transactionid'] );
 
+				$billingid       = isset( $response['billing']['billing-id'] ) ? $response['billing']['billing-id'] : '';
+				$customervaultid = isset( $response['customer-vault-id'] ) ? $response['customer-vault-id'] : '';
+				$newPmToken      = woo_nmi_create_woocommerce_payment_token( $billingid, $customervaultid, $this->apikey );
+				
+
 				if ( $payment_args['type'] == 'sale' ) {
 
 					// Store captured value
@@ -1034,6 +1054,55 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 					$order->update_status( 'on-hold', $authorized_message );
 				}
 
+				//Subscription process
+				if ( ! $acctScreen || ( function_exists( 'wcs_is_subscription' ) && ! wcs_is_subscription( $orderid ) ) ) {
+					// send order to gateway
+					$body = '<' . $trans_type . '> 
+								<api-key>' . $APIKey . '</api-key>
+								<amount>' . $order->get_total() . '</amount>
+								<customer-vault-id>' . $customervaultid . '</customer-vault-id>
+								<order-id>' . $orderid . '</order-id>
+								<billing>
+									<billing-id>' . $billingid . '</billing-id>
+								</billing>';
+
+					$items = $order->get_items();
+					foreach ( $items as $item ) {
+						$body .= '<product>';
+						$body .= '   <product-code>' . $item['product_id'] . '</product-code>';
+						$body .= '   <description>' . urlencode( $item['name'] ) . '</description>';
+						$body .= '   <commodity-code></commodity-code>';
+						$body .= '   <unit-of-measure></unit-of-measure>';
+						$body .= '   <unit-cost>' . round( $item['line_total'], 2 ) . '</unit-cost>';
+						$body .= '   <quantity>' . round( $item['quantity'] ) . '</quantity>';
+						$body .= '   <total-amount>' . round( $item['line_subtotal'], 2 ) . '</total-amount>';
+						$body .= '   <tax-amount></tax-amount>';
+						$body .= '   <tax-rate>1.00</tax-rate>';
+						$body .= '   <discount-amount></discount-amount>';
+						$body .= '   <discount-rate></discount-rate>';
+						$body .= '   <tax-type></tax-type>';
+						$body .= '   <alternate-tax-id></alternate-tax-id>';
+						$body .= '</product>';
+					}
+
+					$body .= '</' . $trans_type . '>';
+
+					$args = array(
+						'headers' => array(
+							'Content-type' => 'text/xml; charset="UTF-8"',
+						),
+						'body'    => $body,
+					);
+
+					// use wp function to handle curl calls
+					$response = wp_remote_post( NMI_Config::$pluginUrl, $args );
+
+					if ( !is_wp_error( $response ) ) {
+						$xml    = simplexml_load_string( $response['body'], 'SimpleXMLElement', LIBXML_NOCDATA );
+						$json   = json_encode( $xml );
+						$result = json_decode( $json, true );
+					}
+				}
 				$order->save();
 
 			}
