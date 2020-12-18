@@ -8,9 +8,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 Plugin Name: NMI Gateway for WooCommerce
 Plugin URI: https://bizztoolz.com/plugins
 Description: Add the NMI Gateway for WooCommerce.
-Version: 1.6.11
-Author: BizZToolz
-Author URI: https://bizztoolz.com/plugins
+Version: 1.0.0
+Author: Paul Kevin
+Author URI: https://hubloy.com
 
 WC requires at least: 4.6.2
 WC tested up to: 4.7.0
