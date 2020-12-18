@@ -11,12 +11,11 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$this->id                 = NMI_Config::$pluginId;
 		$this->icon               = NMI_Config::$pluginIcon;
 		$this->has_fields         = NMI_Config::$pluginHasFields;
-		$this->order_button_text  = __( NMI_Config::$pluginButtonText, NMI_Config::$pluginId );
-		$this->method_title       = __( NMI_Config::$pluginMethodTitle, NMI_Config::$pluginId );
-		$this->method_description = __( NMI_Config::$pluginDescription, NMI_Config::$pluginId );
+		$this->order_button_text  = __( NMI_Config::$pluginButtonText, 'woo-nmi-gateway' );
+		$this->method_title       = __( NMI_Config::$pluginMethodTitle, 'woo-nmi-gateway' );
+		$this->method_description = __( NMI_Config::$pluginDescription, 'woo-nmi-gateway' );
 		$this->gatewayURL         = NMI_Config::$pluginUrl;
 		$this->chosen             = true; // set plugin to be selected on checkout page
-
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -36,8 +35,8 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 		// Actions.
 		add_action( 'woocommerce_api_callback', array( $this, 'successful_request' ) );
-		//add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page' ) );
-		//add_action( 'woocommerce_confirm_order_' . $this->id, array( $this, 'confirm_order_page' ) );
+		// add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page' ) );
+		// add_action( 'woocommerce_confirm_order_' . $this->id, array( $this, 'confirm_order_page' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'validate_options' ) );
 		add_action( 'after_woocommerce_add_payment_method', array( $this, 'add_bng_gateway_payment_method_form' ) );
 		add_action( 'woocommerce_after_account_payment_methods', array( $this, 'add_nmi_delete_action_to_woocommerce' ) );
@@ -81,7 +80,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 */
 	function admin_options() {
 		?>
-			<h3><?php _e( 'NMI Gateway For WooCommerce', NMI_Config::$pluginId ); ?></h3>
+			<h3><?php _e( 'NMI Gateway For WooCommerce', 'woo-nmi-gateway' ); ?></h3>
 			<table class="form-table">
 				<?php $this->generate_settings_html(); ?>
 			</table> 
@@ -102,50 +101,50 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 		$this->form_fields = array(
 			'enabled'                  => array(
-				'title'   => __( 'Enable/Disable', NMI_Config::$pluginId ),
+				'title'   => __( 'Enable/Disable', 'woo-nmi-gateway' ),
 				'type'    => 'checkbox',
-				'label'   => __( 'Enable NMI Gateway For WooCommerce', NMI_Config::$pluginId ),
+				'label'   => __( 'Enable NMI Gateway For WooCommerce', 'woo-nmi-gateway' ),
 				'default' => 'no',
 			),
 			'title'                    => array(
-				'title'       => __( 'Title', NMI_Config::$pluginId ),
+				'title'       => __( 'Title', 'woo-nmi-gateway' ),
 				'type'        => 'text',
-				'description' => __( 'This controls the title which the user sees during checkout.', NMI_Config::$pluginId ),
-				'default'     => __( 'Credit Card / ECheck (NMI)', NMI_Config::$pluginId ),
+				'description' => __( 'This controls the title which the user sees during checkout.', 'woo-nmi-gateway' ),
+				'default'     => __( 'Credit Card (NMI)', 'woo-nmi-gateway' ),
 				'desc_tip'    => true,
 			),
 			'description'              => array(
-				'title'       => __( 'Description', NMI_Config::$pluginId ),
+				'title'       => __( 'Description', 'woo-nmi-gateway' ),
 				'type'        => 'textarea',
-				'description' => __( 'This controls the description which the user sees during checkout.', NMI_Config::$pluginId ),
+				'description' => __( 'This controls the description which the user sees during checkout.', 'woo-nmi-gateway' ),
 				'desc_tip'    => true,
-				'default'     => __( '', NMI_Config::$pluginId ),
+				'default'     => __( '', 'woo-nmi-gateway' ),
 			),
 			'instructions'             => array(
-				'title'       => __( 'Instructions', NMI_Config::$pluginId ),
+				'title'       => __( 'Instructions', 'woo-nmi-gateway' ),
 				'type'        => 'textarea',
-				'description' => __( 'Instructions that will be added to the thank you page.', NMI_Config::$pluginId ),
+				'description' => __( 'Instructions that will be added to the thank you page.', 'woo-nmi-gateway' ),
 				'desc_tip'    => true,
-				'default'     => __( '', NMI_Config::$pluginId ),
+				'default'     => __( '', 'woo-nmi-gateway' ),
 			),
 			'apikey'                   => array(
-				'title'       => __( 'API Key (Required)', NMI_Config::$pluginId ),
+				'title'       => __( 'API Key (Required)', 'woo-nmi-gateway' ),
 				'type'        => 'password',
-				'description' => __( 'NMI merchant account API key', NMI_Config::$pluginId ),
+				'description' => __( 'NMI merchant account API key', 'woo-nmi-gateway' ),
 				'desc_tip'    => true,
 				'default'     => '',
 			),
 			'tokenizationkey'          => array(
-				'title'       => __( 'Tokenization Key (Optional)', NMI_Config::$pluginId ),
+				'title'       => __( 'Tokenization Key (Optional)', 'woo-nmi-gateway' ),
 				'type'        => 'password',
-				'description' => __( 'Tokenization Key integrates with collect.js to allow merchants collect sensitive payment data from customers. You can choose to use collect.js by inserting a tokenization key, otherwise, simply leave this part blank.', NMI_Config::$pluginId ),
+				'description' => __( 'Tokenization Key integrates with collect.js to allow merchants collect sensitive payment data from customers. You can choose to use collect.js by inserting a tokenization key, otherwise, simply leave this part blank.', 'woo-nmi-gateway' ),
 				'desc_tip'    => true,
 				'default'     => '',
 			),
 			'savepaymentmethodstoggle' => array(
-				'title'       => __( 'Turn Saved Payment Methods On/Off', NMI_Config::$pluginId ),
+				'title'       => __( 'Turn Saved Payment Methods On/Off', 'woo-nmi-gateway' ),
 				'type'        => 'select',
-				'description' => __( 'Allows you to turn saved payment methods on and off.', NMI_Config::$pluginId ),
+				'description' => __( 'Allows you to turn saved payment methods on and off.', 'woo-nmi-gateway' ),
 				'default'     => 'off',
 				'desc_tip'    => true,
 				'options'     => array(
@@ -154,9 +153,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				),
 			),
 			'transactiontype'          => array(
-				'title'       => __( 'Transaction Type', NMI_Config::$pluginId ),
+				'title'       => __( 'Transaction Type', 'woo-nmi-gateway' ),
 				'type'        => 'select',
-				'description' => __( 'Authorize only transaction types works when only credit card payment type is used.', NMI_Config::$pluginId ),
+				'description' => __( 'Authorize only transaction types works when only credit card payment type is used.', 'woo-nmi-gateway' ),
 				'default'     => 'sale',
 				'desc_tip'    => true,
 				'options'     => array(
@@ -165,9 +164,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				),
 			),
 			'paymenttype'              => array(
-				'title'       => __( 'Payment Type', NMI_Config::$pluginId ),
+				'title'       => __( 'Payment Type', 'woo-nmi-gateway' ),
 				'type'        => 'select',
-				'description' => __( 'Allows you to make payments with either credit cards, electronic checks, or both. If credit card and echecks are selected, echeck payments will be authorized and captured.', NMI_Config::$pluginId ),
+				'description' => __( 'Allows you to make payments with either credit cards, electronic checks, or both. If credit card and echecks are selected, echeck payments will be authorized and captured.', 'woo-nmi-gateway' ),
 				'default'     => 'both',
 				'desc_tip'    => true,
 				'options'     => array(
@@ -177,9 +176,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				),
 			),
 			'finalorderstatus'         => array(
-				'title'       => __( 'Final Order Status', NMI_Config::$pluginId ),
+				'title'       => __( 'Final Order Status', 'woo-nmi-gateway' ),
 				'type'        => 'select',
-				'description' => __( 'This option allows you to set the final status of an order after it has been processed successfully by the gateway.', NMI_Config::$pluginId ),
+				'description' => __( 'This option allows you to set the final status of an order after it has been processed successfully by the gateway.', 'woo-nmi-gateway' ),
 				'default'     => 'Processing',
 				'desc_tip'    => true,
 				'options'     => array(
@@ -190,20 +189,20 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				),
 			),
 			'redirecturl'              => array(
-				'title'       => __( 'Return URL', NMI_Config::$pluginId ),
+				'title'       => __( 'Return URL', 'woo-nmi-gateway' ),
 				'type'        => 'text',
-				'description' => '<b>' . __( '*OPTIONAL*', NMI_Config::$pluginId ) . '</b> <br />' . __( 'This is the URL the user will be taken to once the sale has been completed. Please enter the full URL of the page. It must be an active page on the same website. If left blank, it will take the buyer to the default order received page.', NMI_Config::$pluginId ),
+				'description' => '<b>' . __( '*OPTIONAL*', 'woo-nmi-gateway' ) . '</b> <br />' . __( 'This is the URL the user will be taken to once the sale has been completed. Please enter the full URL of the page. It must be an active page on the same website. If left blank, it will take the buyer to the default order received page.', 'woo-nmi-gateway' ),
 				'desc_tip'    => true,
 				'default'     => '',
 			),
 
-			'debug' => array(
-				'title'         => __( 'Debug Log' ),
-				'type'          => 'checkbox',
-				'label'         => __( 'Enable logging' ),
-				'default'       => 'no',
-				'description'   => __( 'Log Gateway events, such as IPN requests' ),
-			)
+			'debug'                    => array(
+				'title'       => __( 'Debug Log' ),
+				'type'        => 'checkbox',
+				'label'       => __( 'Enable logging' ),
+				'default'     => 'no',
+				'description' => __( 'Log Gateway events, such as IPN requests' ),
+			),
 		);
 	}
 
@@ -214,8 +213,8 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		echo '<div class="woo-nmi-new-card" id="nmi-payment-data">';
 
 		if ( $this->description ) {
-            echo wpautop( wp_kses_post( $this->description ) );
-        }
+			echo wpautop( wp_kses_post( $this->description ) );
+		}
 		if ( $this->apikey && $this->tokenizationkey ) {
 			$this->collect_js_form();
 		} else {
@@ -232,32 +231,32 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		<fieldset id="wc-<?php echo esc_attr( $this->id ); ?>-cc-form" class="wc-credit-card-form wc-payment-form" style="background:transparent;">
 			<?php do_action( 'woocommerce_credit_card_form_start', $this->id ); ?>
 
-            <div class="form-row form-row-wide">
-                <label for="woo-nmi-card-number-element"><?php esc_html_e( 'Card Number' ); ?> <span class="required">*</span></label>
-                <div class="woo-nmi-card-group">
-                    <div id="woo-nmi-card-number-element" class="wc-nmi-elements-field">
-                    <!-- a NMI Element will be inserted here. -->
-                    </div>
+			<div class="form-row form-row-wide">
+				<label for="woo-nmi-card-number-element"><?php esc_html_e( 'Card Number' ); ?> <span class="required">*</span></label>
+				<div class="woo-nmi-card-group">
+					<div id="woo-nmi-card-number-element" class="wc-nmi-elements-field">
+					<!-- a NMI Element will be inserted here. -->
+					</div>
 
-                    <i class="woo-nmi-credit-card-brand nmi-card-brand" alt="Credit Card"></i>
-                </div>
-            </div>
+					<i class="woo-nmi-credit-card-brand nmi-card-brand" alt="Credit Card"></i>
+				</div>
+			</div>
 
-            <div class="form-row form-row-first">
-                <label for="woo-nmi-card-expiry-element"><?php esc_html_e( 'Expiry Date' ); ?> <span class="required">*</span></label>
+			<div class="form-row form-row-first">
+				<label for="woo-nmi-card-expiry-element"><?php esc_html_e( 'Expiry Date' ); ?> <span class="required">*</span></label>
 
-                <div id="woo-nmi-card-expiry-element" class="wc-nmi-elements-field">
-                <!-- a NMI Element will be inserted here. -->
-                </div>
-            </div>
+				<div id="woo-nmi-card-expiry-element" class="wc-nmi-elements-field">
+				<!-- a NMI Element will be inserted here. -->
+				</div>
+			</div>
 
-            <div class="form-row form-row-last">
-                <label for="woo-nmi-card-cvc-element"><?php esc_html_e( 'Card Code (CVC)' ); ?> <span class="required">*</span></label>
-                <div id="woo-nmi-card-cvc-element" class="wc-nmi-elements-field">
-                <!-- a NMI Element will be inserted here. -->
-                </div>
-            </div>
-            <div class="clear"></div>
+			<div class="form-row form-row-last">
+				<label for="woo-nmi-card-cvc-element"><?php esc_html_e( 'Card Code (CVC)' ); ?> <span class="required">*</span></label>
+				<div id="woo-nmi-card-cvc-element" class="wc-nmi-elements-field">
+				<!-- a NMI Element will be inserted here. -->
+				</div>
+			</div>
+			<div class="clear"></div>
 
 			<!-- Used to display form errors -->
 			<div class="woo-nmi-source-errors" role="alert"></div>
@@ -274,25 +273,25 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			return;
 		}
 
-        add_filter( 'script_loader_tag', array( $this, 'add_public_key_to_js' ), 10, 2 );
+		add_filter( 'script_loader_tag', array( $this, 'add_public_key_to_js' ), 10, 2 );
 
 		wp_enqueue_script( 'nmi-collect-js', 'https://secure.nmi.com/token/Collect.js', '', null, true );
-		wp_enqueue_script( 'wc_nmi_checkout', NMI_WOO_PLUGIN_URL. 'js/checkout.js' , array( 'jquery-payment', 'nmi-collect-js' ), '1.0.0', true );
+		wp_enqueue_script( 'wc_nmi_checkout', NMI_WOO_PLUGIN_URL . 'js/checkout.js', array( 'jquery-payment', 'nmi-collect-js' ), '1.0.0', true );
 
-		$nmi_params = array(
-			'public_key'           	=> $this->apikey,
-			'i18n_terms'           	=> __( 'Please accept the terms and conditions first' ),
-			'i18n_required_fields'	=> __( 'Please fill in required checkout fields first' ),
-            'card_disallowed_error' => __( 'Card Type Not Accepted.' ),
-            'placeholder_cvc'	 	=> __( 'CVC', 'woocommerce' ),
-            'placeholder_expiry' 	=> __( 'MM / YY', 'woocommerce' ),
-            'card_number_error' 	=> __( 'Invalid card number.' ),
-            'card_expiry_error' 	=> __( 'Invalid card expiry date.' ),
-            'card_cvc_error' 		=> __( 'Invalid card CVC.' ),
-            'error_ref' 			=> __( '(Ref: [ref])' ),
-            'timeout_error' 		=> __( 'The tokenization did not respond in the expected timeframe. Please make sure the fields are correctly filled in and submit the form again.' ),
+		$nmi_params                = array(
+			'public_key'            => $this->apikey,
+			'i18n_terms'            => __( 'Please accept the terms and conditions first' ),
+			'i18n_required_fields'  => __( 'Please fill in required checkout fields first' ),
+			'card_disallowed_error' => __( 'Card Type Not Accepted.' ),
+			'placeholder_cvc'       => __( 'CVC', 'woocommerce' ),
+			'placeholder_expiry'    => __( 'MM / YY', 'woocommerce' ),
+			'card_number_error'     => __( 'Invalid card number.' ),
+			'card_expiry_error'     => __( 'Invalid card expiry date.' ),
+			'card_cvc_error'        => __( 'Invalid card CVC.' ),
+			'error_ref'             => __( '(Ref: [ref])' ),
+			'timeout_error'         => __( 'The tokenization did not respond in the expected timeframe. Please make sure the fields are correctly filled in and submit the form again.' ),
 		);
-        $nmi_params['is_checkout'] = ( is_checkout() && empty( $_GET['pay_for_order'] ) ) ? 'yes' : 'no'; // wpcs: csrf ok.
+		$nmi_params['is_checkout'] = ( is_checkout() && empty( $_GET['pay_for_order'] ) ) ? 'yes' : 'no'; // wpcs: csrf ok.
 
 		wp_localize_script( 'wc_nmi_checkout', 'wc_nmi_checkout_params', apply_filters( 'wc_nmi_checkout_params', $nmi_params ) );
 	}
@@ -301,7 +300,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 * Add the public key to the src
 	 */
 	public function add_public_key_to_js( $tag, $handle ) {
-		if ( 'nmi-collect-js' !== $handle ) return $tag;
+		if ( 'nmi-collect-js' !== $handle ) {
+			return $tag;
+		}
 		return str_replace( ' src', ' data-tokenization-key="' . $this->tokenizationkey . '" src', $tag );
 	}
 
@@ -309,9 +310,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 * Process the nmi response
 	 */
 	public function get_nmi_js_response() {
-        if( !isset( $_POST['nmi_js_response'] ) ) {
-            return false;
-        }
+		if ( ! isset( $_POST['nmi_js_response'] ) ) {
+			return false;
+		}
 		$response = json_decode( stripslashes( $_POST['nmi_js_response'] ), 1 );
 		return $response;
 	}
@@ -938,17 +939,17 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 * @param string $order_id - the order id
 	 */
 	function process_payment( $order_id ) {
-		$order     	= wc_get_order( $order_id );
-		$order_key 	= $order->get_order_key();
+		$order     = wc_get_order( $order_id );
+		$order_key = $order->get_order_key();
 
-		$token_id 	= isset( $_POST['wc-nmi-payment-token'] ) ? wc_clean( $_POST['wc-nmi-payment-token'] ) : '';
+		$token_id = isset( $_POST['wc-nmi-payment-token'] ) ? wc_clean( $_POST['wc-nmi-payment-token'] ) : '';
 
 		// Use NMI CURL API for payment
 		try {
-			$post_data = array();
+			$post_data    = array();
 			$payment_args = array();
 
-			if( !$this->get_nmi_js_response() ) {
+			if ( ! $this->get_nmi_js_response() ) {
 
 				// Check for CC details filled or not
 				if ( empty( $_POST['woo-nmi-card-number'] ) || empty( $_POST['woo-nmi-card-expiry'] ) || empty( $_POST['woo-nmi-card-cvc'] ) ) {
@@ -956,39 +957,38 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				}
 			}
 
-			if( $js_response = $this->get_nmi_js_response() ) {
+			if ( $js_response = $this->get_nmi_js_response() ) {
 				$post_data['payment_token'] = $js_response['token'];
 			} else {
-				$expiry = explode( ' / ', wc_clean( $_POST['woo-nmi-card-expiry'] ) );
-				$expiry[1] = substr( $expiry[1], -2 );
-				$post_data['ccnumber']	= wc_clean( $_POST['woo-nmi-card-number'] );
-				$post_data['ccexp']		= $expiry[0] . $expiry[1];
-				$post_data['cvv']		= wc_clean( $_POST['woo-nmi-card-cvc'] );
+				$expiry                = explode( ' / ', wc_clean( $_POST['woo-nmi-card-expiry'] ) );
+				$expiry[1]             = substr( $expiry[1], -2 );
+				$post_data['ccnumber'] = wc_clean( $_POST['woo-nmi-card-number'] );
+				$post_data['ccexp']    = $expiry[0] . $expiry[1];
+				$post_data['cvv']      = wc_clean( $_POST['woo-nmi-card-cvc'] );
 			}
 
-			$description = sprintf( __( '%s - Order %s', 'wc-nmi' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $order->get_order_number() );
+			$description = sprintf( __( '%1$s - Order %2$s', 'wc-nmi' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $order->get_order_number() );
 
 			$description .= ' (' . $this->get_line_items( $order ) . ')';
-			
 
 			$payment_args = array(
-				'orderid'	 		=> $order->get_order_number(),
-				'order_description'	=> $description,
-				'amount'			=> $order->get_total(),
-				'transactionid'		=> $order->get_transaction_id(),
-				'type'				=> $this->transactiontype,
-				'first_name'		=> $order->get_billing_first_name(),
-				'last_name'			=> $order->get_billing_last_name(),
-				'address1'			=> $order->get_billing_address_1(),
-				'address2'			=> $order->get_billing_address_2(),
-				'city'				=> $order->get_billing_city(),
-				'state'				=> $order->get_billing_state(),
-				'country'			=> $order->get_billing_country(),
-				'zip'				=> $order->get_billing_postcode(),
-				'email' 			=> $order->get_billing_email(),
-				'phone'				=> $order->get_billing_phone(),
-				'company'			=> $order->get_billing_company(),
-				'currency'			=> $this->get_payment_currency( $order_id ),
+				'orderid'           => $order->get_order_number(),
+				'order_description' => $description,
+				'amount'            => $order->get_total(),
+				'transactionid'     => $order->get_transaction_id(),
+				'type'              => $this->transactiontype,
+				'first_name'        => $order->get_billing_first_name(),
+				'last_name'         => $order->get_billing_last_name(),
+				'address1'          => $order->get_billing_address_1(),
+				'address2'          => $order->get_billing_address_2(),
+				'city'              => $order->get_billing_city(),
+				'state'             => $order->get_billing_state(),
+				'country'           => $order->get_billing_country(),
+				'zip'               => $order->get_billing_postcode(),
+				'email'             => $order->get_billing_email(),
+				'phone'             => $order->get_billing_phone(),
+				'company'           => $order->get_billing_company(),
+				'currency'          => $this->get_payment_currency( $order_id ),
 			);
 
 			$payment_args = array_merge( $payment_args, $post_data );
@@ -1007,7 +1007,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			if ( $response['response'] == 1 ) {
 				$order->set_transaction_id( $response['transactionid'] );
 
-				if( $payment_args['type'] == 'sale' ) {
+				if ( $payment_args['type'] == 'sale' ) {
 
 					// Store captured value
 					$order->update_meta_data( '_nmi_charge_captured', 'yes' );
@@ -1046,7 +1046,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			// Return thank you page redirect
 			return array(
 				'result'   => 'success',
-				'redirect' => $this->get_return_url( $order )
+				'redirect' => $this->get_return_url( $order ),
 			);
 
 		} catch ( Exception $e ) {
@@ -1059,7 +1059,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 			return array(
 				'result'   => 'fail',
-				'redirect' => ''
+				'redirect' => '',
 			);
 
 		}
@@ -1073,7 +1073,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 */
 	function get_payment_currency( $order_id = false ) {
 		$currency = get_woocommerce_currency();
-	   	$order_id = ! $order_id ? $this->get_checkout_pay_page_order_id() : $order_id;
+		$order_id = ! $order_id ? $this->get_checkout_pay_page_order_id() : $order_id;
 
 		// Gets currency for the current order, that is about to be paid for
 		if ( $order_id ) {
@@ -1085,38 +1085,44 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 	function remote_request( $args ) {
 
-        $request_url = 'https://secure.networkmerchants.com/api/transact.php';
+		$request_url = 'https://secure.networkmerchants.com/api/transact.php';
 
-        $auth_params = array( 'security_key' => $this->apikey );
+		$auth_params = array( 'security_key' => $this->apikey );
 
 		$args['customer_receipt'] = isset( $args['customer_receipt'] ) ? $args['customer_receipt'] : true;
-		$args['ipaddress'] = isset( $args['ipaddress'] ) ? $args['ipaddress'] : WC_Geolocation::get_ip_address();
+		$args['ipaddress']        = isset( $args['ipaddress'] ) ? $args['ipaddress'] : WC_Geolocation::get_ip_address();
 
-        if( isset( $args['transactionid'] ) && empty( $args['transactionid'] ) ) {
-            unset( $args['transactionid'] );
-        }
+		if ( isset( $args['transactionid'] ) && empty( $args['transactionid'] ) ) {
+			unset( $args['transactionid'] );
+		}
 
-        if( isset( $args['currency'] ) && empty( $args['currency'] ) ) {
-            $args['currency'] = get_woocommerce_currency();
-        }
+		if ( isset( $args['currency'] ) && empty( $args['currency'] ) ) {
+			$args['currency'] = get_woocommerce_currency();
+		}
 
-        if( isset( $args['state'] ) && empty( $args['state'] ) && ! in_array( $args['type'], array( 'capture', 'void', 'refund' ) ) ) {
-            $args['state'] = 'NA';
-        }
+		if ( isset( $args['state'] ) && empty( $args['state'] ) && ! in_array( $args['type'], array( 'capture', 'void', 'refund' ) ) ) {
+			$args['state'] = 'NA';
+		}
 
-        $args = array_merge( $args, $auth_params );
+		$args = array_merge( $args, $auth_params );
 
-        // Setting custom timeout for the HTTP request
+		// Setting custom timeout for the HTTP request
 		add_filter( 'http_request_timeout', array( $this, 'http_request_timeout' ), 9999 );
 
-        //$headers = array( 'Content-Type' => 'application/json' );
-        $headers = array();
-        $response = wp_remote_post( $request_url, array( 'body' => $args , 'headers' => $headers ) );
+		// $headers = array( 'Content-Type' => 'application/json' );
+		$headers  = array();
+		$response = wp_remote_post(
+			$request_url,
+			array(
+				'body'    => $args,
+				'headers' => $headers,
+			)
+		);
 
 		$result = is_wp_error( $response ) ? $response : wp_remote_retrieve_body( $response );
 
-        // Saving to Log here
-		if( $this->debug ) {
+		// Saving to Log here
+		if ( $this->debug ) {
 			$message = sprintf( "\nPosting to: \n%s\nRequest: \n%sResponse: \n%s", $request_url, print_r( $args, 1 ), print_r( $result, 1 ) );
 			WC_NMI_Logger::log( $message );
 		}
@@ -1125,29 +1131,29 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
-		} elseif( empty( $result ) ) {
+		} elseif ( empty( $result ) ) {
 			return new WP_Error( 'invalid_response', __( 'There was an error with the gateway response.', 'wc-nmi' ) );
 		}
 
-        parse_str( $result, $result );
+		parse_str( $result, $result );
 
-        if( count( $result ) < 8 ) {
-            return new WP_Error( 'invalid_response', sprintf( __( 'Unrecognized response from the gateway: %s', 'wc-nmi' ), $response ) );
-        }
-
-        if( !isset( $result['response'] ) || !in_array( $result['response'], array( 1, 2, 3 ) ) ) {
-            return new WP_Error( 'invalid_response', __( 'There was an error with the gateway response.', 'wc-nmi' ) );
-        }
-
-        if( $result['response'] == 2 ) {
-            return new WP_Error( 'decline_response', '<!-- Error: ' . $result['response_code'] . ' --> ' . __( 'Your card has been declined.', 'wc-nmi' ), $result );
+		if ( count( $result ) < 8 ) {
+			return new WP_Error( 'invalid_response', sprintf( __( 'Unrecognized response from the gateway: %s', 'wc-nmi' ), $response ) );
 		}
 
-        if( $result['response'] == 3 ) {
-            return new WP_Error( 'error_response', '<!-- Error: ' . $result['response_code'] . ' --> ' . $result['responsetext'], $result );
+		if ( ! isset( $result['response'] ) || ! in_array( $result['response'], array( 1, 2, 3 ) ) ) {
+			return new WP_Error( 'invalid_response', __( 'There was an error with the gateway response.', 'wc-nmi' ) );
 		}
 
-        return $result;
+		if ( $result['response'] == 2 ) {
+			return new WP_Error( 'decline_response', '<!-- Error: ' . $result['response_code'] . ' --> ' . __( 'Your card has been declined.', 'wc-nmi' ), $result );
+		}
+
+		if ( $result['response'] == 3 ) {
+			return new WP_Error( 'error_response', '<!-- Error: ' . $result['response_code'] . ' --> ' . $result['responsetext'], $result );
+		}
+
+		return $result;
 
 	}
 
@@ -1162,7 +1168,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$line_items = array();
 		// order line items
 		foreach ( $order->get_items() as $item ) {
-			$line_items[] = $item->get_name() . ' x ' .$item->get_quantity();
+			$line_items[] = $item->get_name() . ' x ' . $item->get_quantity();
 		}
 		return implode( ', ', $line_items );
 	}
@@ -1238,7 +1244,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		if ( ! empty( $reason ) ) {
 			$note = "$note\n$reason";
 		}
-		$order->add_order_note( __( $note, NMI_Config::$pluginId ) );
+		$order->add_order_note( __( $note, 'woo-nmi-gateway' ) );
 
 		if ( $isrefunded == 'Y' ) {
 			return true;
@@ -1317,7 +1323,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				woo_nmi_verify_nmi_payment_method_details( $billingId, $vaultId, $this->apikey );
 			} catch ( Exception $ex ) {
 				WC_NMI_Logger::log( $ex->getMessage() );
-				throw new Exception( __( $ex->getMessage(), NMI_Config::$pluginId ) );
+				throw new Exception( __( $ex->getMessage(), 'woo-nmi-gateway' ) );
 			}
 		}
 	}

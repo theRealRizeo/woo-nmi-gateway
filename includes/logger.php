@@ -55,4 +55,4 @@ class WC_NMI_Logger {
 		}
 	}
 }
-?>
+
