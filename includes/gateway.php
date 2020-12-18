@@ -218,7 +218,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		if ( $this->apikey && $this->tokenizationkey ) {
 			$this->collect_js_form();
 		} else {
-			$this->form();
+			$this->credit_card_form();
 		}
 		echo '</div>';
 	}
