@@ -62,7 +62,7 @@ function populateStoredPaymentMethods() {
         li.setAttribute('tokenId', paymentMethods[index].internalId);
         li.onclick = (e) => { 
             e.preventDefault(); 
-            if (e.target.nodeName != 'A') bng701_toggleState(e.currentTarget);
+            if (e.target.nodeName != 'A') woo_nmi_toggleState(e.currentTarget);
         }
         if (paymentMethods[index].highlight) {
             li.style.backgroundColor = '#6ac372';
@@ -104,7 +104,7 @@ function populateStoredPaymentMethods() {
         link.onclick = async (e) => { 
             e.preventDefault(); 
             jQuery('#bng_spinner').show();
-            await bng701_deletePM(e.target);
+            await woo_nmi_deletePM(e.target);
         }
         link.append(document.createTextNode('Delete'));
 
@@ -160,7 +160,7 @@ function populateMinExpiration() {
     exp.value = `${currentYear}-${month}`;
 }
 
-function bng701_toggleState(event) {
+function woo_nmi_toggleState(event) {
     var allPms = document.getElementsByClassName("active");
 
     if (allPms.length) {
@@ -226,7 +226,7 @@ function display_check_elements(event) {
     }
 }
     
-async function bng701_cc_validate(acctScreenPage = false) {
+async function woo_nmi_cc_validate(acctScreenPage = false) {
     //disable form fields
     if (!acctScreenPage) {
         document.getElementById("bng_backButton").disabled = true;
@@ -312,10 +312,10 @@ async function bng701_cc_validate(acctScreenPage = false) {
 
         return false;
     }
-    else await bng701_arrangeData(newPm, paymentType, acctScreenPage);
+    else await woo_nmi_arrangeData(newPm, paymentType, acctScreenPage);
 }
 
-async function bng701_arrangeData(newPm, paymentType, acctScreenPage = false) {
+async function woo_nmi_arrangeData(newPm, paymentType, acctScreenPage = false) {
     if (!acctScreenPage) {
         document.getElementById("bng_backButton").disabled = true;
         document.getElementById("bng_submitButton").disabled = true;
@@ -369,7 +369,7 @@ async function bng701_arrangeData(newPm, paymentType, acctScreenPage = false) {
             document.getElementById("billingccexp").value = expiry.substr(-2) + expiry.substr(2, 2);
         }
     }
-    return await bng701_stepOne(data, newPm);
+    return await woo_nmi_stepOne(data, newPm);
 }
 
 function useTokenization() {

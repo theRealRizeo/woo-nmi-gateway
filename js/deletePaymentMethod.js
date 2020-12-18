@@ -1,11 +1,11 @@
-async function bng701_deletePM( event, deleteFromAcctScreen = false ) { 
+async function woo_nmi_deletePM( event, deleteFromAcctScreen = false ) { 
     var tokenId = event.getAttribute('tokenId');
     var nonce = event.getAttribute('nonce');
         
     if (!deleteFromAcctScreen) document.getElementById('paymentMethod_li_' + tokenId).style.backgroundColor = "#CCCCCC";
 
     return await AjaxCall({
-        action: 'bng701_deletePaymentMethod',
+        action: 'woo_nmi_deletePaymentMethod',
         security: nonce,
         tokenId: tokenId,
         isAcctScreen: deleteFromAcctScreen,

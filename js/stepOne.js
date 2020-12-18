@@ -1,5 +1,5 @@
 //performs step one of the bng three step process.  formats non-secure data and retrieves a url
-async function bng701_stepOne(data, newPm) {
+async function woo_nmi_stepOne(data, newPm) {
     var goAhead = false;
     var form = document.getElementById('bng_submitPayment');
 
@@ -18,7 +18,7 @@ async function bng701_stepOne(data, newPm) {
     if (data['savepaymentmethod'] == 'N' || (data['savepaymentmethod'] == 'Y' && !data['customerHasVault']) || data['tokenid']) {
     // (1) creates new customer vault id and billing id
         await AjaxCall({
-            action: 'bng701_stepOne',
+            action: 'woo_nmi_stepOne',
             data: data
         }).then((response) => {
             goAhead = true;
@@ -46,7 +46,7 @@ async function bng701_stepOne(data, newPm) {
     // (2) add a billing id to an existing customer vault id.  use add-billing first for three step, then process the sale after that has returned
         // testing ajax
         await AjaxCall({
-            action: 'bng701_stepOne_addBilling',
+            action: 'woo_nmi_stepOne_addBilling',
             data: data
         }).then((response) => {
             goAhead = true;

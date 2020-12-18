@@ -1,8 +1,8 @@
-function bng701_backToCheckout() {
+function woo_nmi_backToCheckout() {
     window.location.assign(storedVariables.cartUrl());
 }
 
-function bng701_timer(intervalid, length, counter) {
+function woo_nmi_timer(intervalid, length, counter) {
     // todo where is this called?
     //if the user waits too long, prompt them to go back
     if (typeof intervalid !== 'undefined') clearInterval(intervalid);
