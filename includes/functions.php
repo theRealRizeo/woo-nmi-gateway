@@ -10,14 +10,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @param array $actions - predefined actions
  */
-function bng701_add_order_capture_charge_action( $actions ) {
+function woo_nmi_add_order_capture_charge_action( $actions ) {
 	global $theorder;
 
 	$doNotAddCaptureAction = true;
 	$trans_id              = $theorder->get_transaction_id();
-	$apiKey                = bng701_get_apikey();
+	$apiKey                = woo_nmi_get_api_key();
 
-	$transaction = bng701_getTransaction( $trans_id, $apiKey );
+	$transaction = woo_nmi_getTransaction( $trans_id, $apiKey );
 	if ( isset( $transaction['condition'] ) ) {
 		if ( $transaction['condition'] === 'pending' ) {
 			$doNotAddCaptureAction = false;
@@ -39,7 +39,7 @@ function bng701_add_order_capture_charge_action( $actions ) {
 				$result['authorization-code'] = $transaction['authorization_code'];
 				$result['transaction-id']     = $theorder->get_transaction_id();
 
-				$note = bng701_get_order_completion_notes( 'success', $result );
+				$note = woo_nmi_get_order_completion_notes( 'success', $result );
 				$theorder->add_order_note( __( $note, NMI_Config::$pluginId ) );
 			}
 
@@ -64,7 +64,7 @@ function bng701_add_order_capture_charge_action( $actions ) {
  *
  * @return array
  */
-function bng701_start_complete_order_process( $apikey, $token ) {
+function woo_nmi_start_complete_order_process( $apikey, $token ) {
 	// step 3 - Get cURL resource - Create body
 	$body = '<complete-action> 
         <api-key>' . $apikey . '</api-key>
@@ -102,7 +102,7 @@ function bng701_start_complete_order_process( $apikey, $token ) {
  * @param object $bngGatewayObj - the plugin object
  * @param bool   $isAccount - indicates whether user is in the account management page or not. default is false.
  */
-function bng701_complete_order( $order, $status, $result, $trans_type, $bngGatewayObj, $isAcctScreen = false ) {
+function woo_nmi_complete_order( $order, $status, $result, $trans_type, $bngGatewayObj, $isAcctScreen = false ) {
 	global $woocommerce;
 
 	$oncomplete_action = $bngGatewayObj->finalorderstatus;
@@ -124,7 +124,7 @@ function bng701_complete_order( $order, $status, $result, $trans_type, $bngGatew
 				}
 
 				// Add helpful notes
-				$note = bng701_get_order_completion_notes( 'success', $result );
+				$note = woo_nmi_get_order_completion_notes( 'success', $result );
 				$order->add_order_note( __( $note, NMI_Config::$pluginId ) );
 
 				// Empty cart
@@ -174,7 +174,7 @@ function bng701_complete_order( $order, $status, $result, $trans_type, $bngGatew
 			}
 		} else {
 			// Add helpful notes
-			$note = bng701_get_order_completion_notes( 'error', $result );
+			$note = woo_nmi_get_order_completion_notes( 'error', $result );
 			$order->add_order_note( __( $note, NMI_Config::$pluginId ) );
 
 			if ( function_exists( 'wc_add_notice' ) ) {
@@ -208,8 +208,8 @@ function bng701_complete_order( $order, $status, $result, $trans_type, $bngGatew
  *
  * @param object $order - the order object
  */
-function bng701_process_capture_charge_action( $order ) {
-	$apiKey = bng701_get_apikey();
+function woo_nmi_process_capture_charge_action( $order ) {
+	$apiKey = woo_nmi_get_api_key();
 	$query  = 'security_key=' . urlencode( $apiKey );
 	// Transaction Information
 	$query .= '&transactionid=' . urlencode( $order->get_transaction_id() );
@@ -217,7 +217,7 @@ function bng701_process_capture_charge_action( $order ) {
 	$query .= '&orderid=' . urlencode( $order->get_id() );
 	$query .= '&type=capture';
 
-	$responses = bng701_doCurl( $query );
+	$responses = woo_nmi_doCurl( $query );
 	$result    = array(
 		'result-code'        => $responses['response_code'],
 		'result-text'        => $responses['responsetext'],
@@ -231,7 +231,7 @@ function bng701_process_capture_charge_action( $order ) {
 		// capture passed
 		// if capture is successful go ahead and update this
 		$order->add_order_note( __( 'Authorization capture successful', NMI_Config::$pluginId ) );
-		$note = bng701_get_order_completion_notes( 'success', $result );
+		$note = woo_nmi_get_order_completion_notes( 'success', $result );
 		$order->add_order_note( __( $note, NMI_Config::$pluginId ) );
 		$order->payment_complete( $order->get_transaction_id() );
 
@@ -243,7 +243,7 @@ function bng701_process_capture_charge_action( $order ) {
 		$order->add_order_note( __( 'Authorization capture failed', NMI_Config::$pluginId ) );
 		$order->add_order_note( __( $dsp_error, NMI_Config::$pluginId ) );
 
-		$note = bng701_get_order_completion_notes( 'error', $result );
+		$note = woo_nmi_get_order_completion_notes( 'error', $result );
 		$order->add_order_note( __( $note, NMI_Config::$pluginId ) );
 	}
 }
@@ -259,7 +259,7 @@ function bng701_process_capture_charge_action( $order ) {
  *
  * @return void
  */
-function bng701_html( $savepaymentmethodtoggle, $tokenizationkey = '', $data = '', $order_id = '', $paymentMethods = '' ) {
+function woo_nmi_payment_html( $savepaymentmethodtoggle, $tokenizationkey = '', $data = '', $order_id = '', $paymentMethods = '' ) {
 	$pluginPath         = NMI_WOO_PLUGIN_URL;
 	$useTokenizationKey = $showSavePmLater = $forceSavePm = false;
 	$hasVault           = '';
@@ -411,9 +411,9 @@ function bng701_html( $savepaymentmethodtoggle, $tokenizationkey = '', $data = '
 
 			<div class='bng_buttons'>
 				<input type ='button' id='bng_backButton' value='Back to Cart' class='detailsDiv'
-					onclick='bng701_backToCheckout();' >
+					onclick='woo_nmi_backToCheckout();' >
 				<input type='button' id='bng_submitButton' value='Submit' class='detailsDiv submit' 
-					onclick='bng701_cc_validate();'>
+					onclick='woo_nmi_cc_validate();'>
 			</div>
 		<?php
 	}
@@ -440,7 +440,7 @@ function bng701_html( $savepaymentmethodtoggle, $tokenizationkey = '', $data = '
 			
 			jQuery( '.bng-form-group' ).on("click", function(event) {
 				event.preventDefault(); 
-				bng701_toggleState(event.currentTarget);
+				woo_nmi_toggleState(event.currentTarget);
 			});
 
 			jQuery('#bng_savePaymentMethod').on('click', function(event) {
@@ -476,7 +476,7 @@ function bng701_html( $savepaymentmethodtoggle, $tokenizationkey = '', $data = '
  *
  * @return string
  */
-function bng701_getCardType( $type ) {
+function woo_nmi_get_card_type( $type ) {
 	if ( stristr( $type, 'visa' ) ) {
 		return 'visa';
 	} elseif ( stristr( $type, 'american' ) ) {
@@ -502,7 +502,7 @@ function bng701_getCardType( $type ) {
  * @param string $code - the result code
  * @return string code description
  */
-function bng701_getResultCodeText( $code ) {
+function woo_nmi_getResultCodeText( $code ) {
 	// definitions
 	$codes = array(
 		1       => 'Transaction was approved',
@@ -582,7 +582,7 @@ function bng701_getResultCodeText( $code ) {
 	return in_array( $code, array_keys( $codes ) ) ? $codes[ $code ] : '';
 }
 
-function bng701_cleanTheData( $data, $datatype = 'none' ) {
+function woo_nmi_cleanTheData( $data, $datatype = 'none' ) {
 	// per WP's requirements, we need to sanitze, validate and escape data passed in from the form.  I'm attempting to do that in one function
 	// $data is the value to clean, $datatype (if defined) is the expected data type of $data
 	// based on the datatype, we'll run some extra validation as well.  in the end, we'll return either the scrubbed data value or a null value if it doesn't comply
@@ -623,16 +623,16 @@ function bng701_cleanTheData( $data, $datatype = 'none' ) {
 	return $data;
 }
 
-function bng701_pw_load_scripts() {
+function woo_nmi_pw_load_scripts() {
 	wp_enqueue_script( 'my_script', NMI_WOO_PLUGIN_URL . 'js/my_script.js', array( 'jquery' ) );
 	wp_localize_script( 'my_script', 'frontendajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
 	wp_enqueue_script( 'backThatUp', NMI_WOO_PLUGIN_URL . 'js/backToCheckout.js' );
 	wp_enqueue_style( 'my_styles', NMI_WOO_PLUGIN_URL . 'css/my_styles.css' );
 
-	wp_enqueue_script( 'bng701_ajax_custom_script', NMI_WOO_PLUGIN_URL . 'js/stepOne.js', array( 'jquery' ) );
-	wp_localize_script( 'bng701_ajax_custom_script', 'frontendajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
-	wp_enqueue_script( 'bng701_ajax_custom_script1', NMI_WOO_PLUGIN_URL . 'js/deletePaymentMethod.js', array( 'jquery' ) );
-	wp_localize_script( 'bng701_ajax_custom_script1', 'frontendajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
+	wp_enqueue_script( 'woo_nmi_ajax_custom_script', NMI_WOO_PLUGIN_URL . 'js/stepOne.js', array( 'jquery' ) );
+	wp_localize_script( 'woo_nmi_ajax_custom_script', 'frontendajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
+	wp_enqueue_script( 'woo_nmi_ajax_custom_script1', NMI_WOO_PLUGIN_URL . 'js/deletePaymentMethod.js', array( 'jquery' ) );
+	wp_localize_script( 'woo_nmi_ajax_custom_script1', 'frontendajax', array( 'ajaxurl' => admin_url( 'admin-ajax.php' ) ) );
 }
 
 // region Javascript Ajax Functions
@@ -641,14 +641,14 @@ function bng701_pw_load_scripts() {
  * Processes step one for the nmi-three-step.
  * Specifically adds a new billing method to an existing customer
  */
-function bng701_stepOne_addBilling() {
+function woo_nmi_stepOne_addBilling() {
 	$data     = $_POST['data'];
 	$security = sanitize_text_field( $data['security'] );
 	check_ajax_referer( 'checkout-nonce', $security, false );
 
 	// catch variables passed in and define them
 	$pluginId                             = NMI_Config::$pluginId;
-	$apikey                               = bng701_get_apikey();
+	$apikey                               = woo_nmi_get_api_key();
 	$orderid                              = sanitize_text_field( $data['orderid'] );
 	$isAcctScreen                         = $data['isAcctScreen'];
 	$woocommerce_add_payment_method_nonce = $data['woocommerce-add-payment-method-nonce'];
@@ -683,7 +683,7 @@ function bng701_stepOne_addBilling() {
 	$payment_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
 	if ( ! empty( $payment_tokens ) ) {
 		$customerVaultId = $billingId = '';
-		bng701_create_new_ids( $payment_tokens, $customerVaultId, $billingId );
+		woo_nmi_create_new_ids( $payment_tokens, $customerVaultId, $billingId );
 	} else {
 		wp_send_json_error( 'To add new payment method, customer should have previous payment methods', 400 );
 	}
@@ -736,10 +736,10 @@ function bng701_stepOne_addBilling() {
 /**
  * Processes nmi-three-step first step
  */
-function bng701_stepOne() {
+function woo_nmi_stepOne() {
 	$data     = $_POST['data'];
 	$pluginId = NMI_Config::$pluginId;
-	$apikey   = bng701_get_apikey();
+	$apikey   = woo_nmi_get_api_key();
 	$security = sanitize_text_field( $data['security'] );
 
 	check_ajax_referer( 'checkout-nonce', $security, false );
@@ -781,14 +781,14 @@ function bng701_stepOne() {
 
 		// means the customer wants to change the payment method used in subscription
 		if ( function_exists( 'wcs_is_subscription' ) && wcs_is_subscription( $orderid ) && $ordertotal == 0 ) {
-			bng701_update_paymentmethod_subscription( '', wc_get_order( $orderid ), $billingid );
+			woo_nmi_update_paymentmethod_subscription( '', wc_get_order( $orderid ), $billingid );
 
 			echo wc_get_endpoint_url( 'subscriptions', '', wc_get_page_permalink( 'myaccount' ) );
 			wp_die();
 		} else {
 			// Create body
 			$body  = '<' . $transactiontype . '>';
-			$body .= bng701_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid );
+			$body .= woo_nmi_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid );
 			$body .= '</' . $transactiontype . '>';
 
 			$args = array(
@@ -822,25 +822,25 @@ function bng701_stepOne() {
 			}
 		}
 	} elseif ( $savepaymentmethod == 'Y' ) {
-		bng701_create_new_ids( $payment_tokens, $customervaultid, $billingid );
+		woo_nmi_create_new_ids( $payment_tokens, $customervaultid, $billingid );
 
 		if ( empty( $customervaultid ) ) {
-			$customervaultid = bng701_create_random_string();
+			$customervaultid = woo_nmi_create_random_string();
 
 			if ( ( function_exists( 'wcs_is_subscription' ) && wcs_is_subscription( $orderid ) ) || ! empty( $isAcctScreen ) ) {
 				$body  = '<add-customer>';
-				$body .= bng701_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid, false );
+				$body .= woo_nmi_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid, false );
 				$body .= '</add-customer>';
 			} else {
 				$body  = '<' . $transactiontype . '>';
-				$body .= bng701_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid, true, false );
+				$body .= woo_nmi_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid, true, false );
 				$body .= '<add-customer>
                                 <customer-vault-id>' . $customervaultid . '</customer-vault-id>
                             </add-customer>';
 				$body .= '</' . $transactiontype . '>';
 			}
 		} else {
-			bng701_stepOne_addBilling();
+			woo_nmi_stepOne_addBilling();
 		}
 
 		$args = array(
@@ -870,7 +870,7 @@ function bng701_stepOne() {
 		// implies one time sale, do not save the payment method for later
 		// Create body
 		$body  = '<' . $transactiontype . '>';
-		$body .= bng701_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid, true, false, false );
+		$body .= woo_nmi_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid, true, false, false );
 		$body .= '</' . $transactiontype . '>';
 
 		$args = array(
@@ -904,11 +904,11 @@ function bng701_stepOne() {
 /**
  * Deletes the payment method in both the gateway and woocommerce
  */
-function bng701_deletePaymentMethod() {
-	$apikey          = bng701_get_apikey();
+function woo_nmi_deletePaymentMethod() {
+	$apikey          = woo_nmi_get_api_key();
 	$isAccountScreen = ( $_POST['isAcctScreen'] == 'true' ) ? true : false;
 
-	$tokenId  = bng701_cleanTheData( $_POST['tokenId'], 'string' );
+	$tokenId  = woo_nmi_cleanTheData( $_POST['tokenId'], 'string' );
 	$security = $_POST['security'];
 	// if security is not null and post acct screen false
 	if ( ! empty( $security ) && ! $isAccountScreen ) {
@@ -919,7 +919,7 @@ function bng701_deletePaymentMethod() {
 	$paymentTokenToDelete = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() )[ $tokenId ];
 	$billingId            = $paymentTokenToDelete->get_token();
 	$vaultId              = $paymentTokenToDelete->get_meta( 'vaultid' );
-	$customerDetails      = bng701_getCustomerDetails( $vaultId, $apikey );
+	$customerDetails      = woo_nmi_getCustomerDetails( $vaultId, $apikey );
 
 	if ( isset( $customerDetails['billing']['@attributes'] ) ) {
 		// only one billing
@@ -976,7 +976,7 @@ function bng701_deletePaymentMethod() {
  *
  * @return string
  */
-function bng701_create_random_string() {
+function woo_nmi_create_random_string() {
 	$characters       = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 	$charactersLength = strlen( $characters );
 	$randomString     = '';
@@ -993,7 +993,7 @@ function bng701_create_random_string() {
  * @param string &$customerVaultId - the customer vault id
  * @param string &$billingId - the billing id
  */
-function bng701_create_new_ids( $payment_tokens, &$customerVaultId, &$billingId ) {
+function woo_nmi_create_new_ids( $payment_tokens, &$customerVaultId, &$billingId ) {
 	$usedBillingIds = array();
 	foreach ( $payment_tokens as $bngPt ) {
 		$usedBillingId    = $bngPt->get_token();
@@ -1003,7 +1003,7 @@ function bng701_create_new_ids( $payment_tokens, &$customerVaultId, &$billingId 
 
 	$isNew = 'Y';
 	while ( $isNew == 'Y' ) {
-		$billingId = bng701_create_random_string();
+		$billingId = woo_nmi_create_random_string();
 		if ( ! in_array( $billingId, $usedBillingIds ) ) {
 			$isNew = 'N';
 		}
@@ -1016,11 +1016,11 @@ function bng701_create_new_ids( $payment_tokens, &$customerVaultId, &$billingId 
  *
  * @param string $apikey
  */
-function bng701_screen_payment_methods_against_nmi( $apikey ) {
+function woo_nmi_screen_payment_methods_against_nmi( $apikey ) {
 	$temp_payment_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
 	if ( ! empty( $temp_payment_tokens ) ) {
 		$customervaultid    = current( $temp_payment_tokens )->get_meta( 'vaultid' );
-		$nmiCustomerDetails = bng701_getCustomerDetails( $customervaultid, $apikey );
+		$nmiCustomerDetails = woo_nmi_getCustomerDetails( $customervaultid, $apikey );
 
 		// if nmi is empty, delete whatever is in the paymenttoken
 		if ( empty( $nmiCustomerDetails ) ) {
@@ -1062,7 +1062,7 @@ function bng701_screen_payment_methods_against_nmi( $apikey ) {
 			foreach ( $nmi_billings as $nmi_billing ) {
 				$bid = $nmi_billing['@attributes']['id'];
 				if ( ! in_array( $bid, $woo_ids ) ) {
-					bng701_create_woocommerce_payment_token( $bid, $customervaultid, $apikey, $nmi_billing );
+					woo_nmi_create_woocommerce_payment_token( $bid, $customervaultid, $apikey, $nmi_billing );
 				}
 			}
 		}
@@ -1079,9 +1079,9 @@ function bng701_screen_payment_methods_against_nmi( $apikey ) {
  *
  * @return object WC_Payment_Token
  */
-function bng701_create_woocommerce_payment_token( $billingId, $vaultId, $apikey, $paymentDetails = '' ) {
+function woo_nmi_create_woocommerce_payment_token( $billingId, $vaultId, $apikey, $paymentDetails = '' ) {
 	if ( empty( $paymentDetails ) ) {
-		$paymentDetails = bng701_getPMDetailsByBillingId( $billingId, $apikey )['customer']['billing'];
+		$paymentDetails = woo_nmi_getPMDetailsByBillingId( $billingId, $apikey )['customer']['billing'];
 	}
 
 	if ( empty( $paymentDetails['cc_number'] ) ) {
@@ -1118,7 +1118,7 @@ function bng701_create_woocommerce_payment_token( $billingId, $vaultId, $apikey,
  * @param object|WC_Order|WC_Subscription $order - the order or subscription order
  * @param string                          $billingId
  */
-function bng701_update_paymentmethod_subscription( $newPmToken, $order, $billingId ) {
+function woo_nmi_update_paymentmethod_subscription( $newPmToken, $order, $billingId ) {
 	if ( NMI_Config::$projectType == 'bng' || ngfw_fs()->is_plan( 'Premium' ) ) {
 		$orderid = $order->get_id();
 
@@ -1162,18 +1162,18 @@ function bng701_update_paymentmethod_subscription( $newPmToken, $order, $billing
 				foreach ( wcs_get_subscriptions_for_order( $orderid ) as $subscription ) {
 					$subscription->set_payment_method( NMI_Config::$pluginId, $payment_meta );
 					$subscription->save();
-					bng701_payment_method_change_notification( $newPmToken, $subscription );
+					woo_nmi_payment_method_change_notification( $newPmToken, $subscription );
 				}
 
 				if ( wcs_order_contains_resubscribe( $order ) ) {
 					$sub_id      = (int) $order->get_meta( '_subscription_resubscribe' );
 					$get_old_sub = wcs_get_subscription( $sub_id );
-					bng701_remove_payment_meta_from_suscription( $get_old_sub );
+					woo_nmi_remove_payment_meta_from_suscription( $get_old_sub );
 				}
 			} else {
 				$order->set_payment_method( NMI_Config::$pluginId, $payment_meta );
 				$order->save();
-				bng701_payment_method_change_notification( $newPmToken, $order );
+				woo_nmi_payment_method_change_notification( $newPmToken, $order );
 			}
 
 			// update all subscriptions payment meta is selected by user
@@ -1192,7 +1192,7 @@ function bng701_update_paymentmethod_subscription( $newPmToken, $order, $billing
 							continue;
 						}
 
-						bng701_payment_method_change_notification( $newPmToken, $subscription );
+						woo_nmi_payment_method_change_notification( $newPmToken, $subscription );
 					}
 				}
 			}
@@ -1206,7 +1206,7 @@ function bng701_update_paymentmethod_subscription( $newPmToken, $order, $billing
  * @param object|WC_Payment_Token         $token
  * @param object|WC_Order|WC_Subscription
  */
-function bng701_payment_method_change_notification( $token, $order ) {
+function woo_nmi_payment_method_change_notification( $token, $order ) {
 	$cardType = $token->get_data()['card_type'];
 	$last4    = $token->get_data()['last4'];
 	$msg      = ( empty( $cardType ) ) ? 'eCheck with account number' : "{$cardType}";
@@ -1225,8 +1225,8 @@ function bng701_payment_method_change_notification( $token, $order ) {
  *
  * @return string
  */
-function bng701_get_order_completion_notes( $status, $result ) {
-	$resultCodeText = bng701_getResultCodeText( $result['result-code'] );
+function woo_nmi_get_order_completion_notes( $status, $result ) {
+	$resultCodeText = woo_nmi_getResultCodeText( $result['result-code'] );
 	$dsp_error      = $result['result-text'];
 
 	if ( $status == 'success' ) {
@@ -1235,8 +1235,8 @@ function bng701_get_order_completion_notes( $status, $result ) {
 		$note .= 'Transaction ID: ' . sanitize_text_field( $result['transaction-id'] ) . "\n";
 		$note .= 'Result Code Text: ' . sanitize_text_field( $resultCodeText ) . ' (Code: ' . $result['result-code'] . ")\n";
 		$note .= 'Authorization Code: ' . sanitize_text_field( $result['authorization-code'] ) . "\n";
-		$note .= empty( $result['avs-result'] ) ? '' : 'Avs Address Match: ' . sanitize_text_field( $result['avs-result'] ) . ' - ' . bng701_getResultCodeText( 'AVS-' . $result['avs-result'] ) . "\n";
-		$note .= empty( $result['cvv-result'] ) ? '' : 'Cvv Address Match: ' . sanitize_text_field( $result['cvv-result'] ) . ' - ' . bng701_getResultCodeText( 'CVV-' . $result['cvv-result'] ) . "\n";
+		$note .= empty( $result['avs-result'] ) ? '' : 'Avs Address Match: ' . sanitize_text_field( $result['avs-result'] ) . ' - ' . woo_nmi_getResultCodeText( 'AVS-' . $result['avs-result'] ) . "\n";
+		$note .= empty( $result['cvv-result'] ) ? '' : 'Cvv Address Match: ' . sanitize_text_field( $result['cvv-result'] ) . ' - ' . woo_nmi_getResultCodeText( 'CVV-' . $result['cvv-result'] ) . "\n";
 	} else {
 		// Add helpful notes
 		$note  = "Failure Details:\n";
@@ -1251,7 +1251,7 @@ function bng701_get_order_completion_notes( $status, $result ) {
  *
  * @param object|WC_Subscription
  */
-function bng701_remove_payment_meta_from_suscription( $subscription ) {
+function woo_nmi_remove_payment_meta_from_suscription( $subscription ) {
 	$id = $subscription->get_id();
 	$subscription->delete_meta_data( '_nmi_gateway_vault_id' );
 	$subscription->delete_meta_data( '_nmi_gateway_billing_id' );
@@ -1265,7 +1265,7 @@ function bng701_remove_payment_meta_from_suscription( $subscription ) {
 /**
  * Generic function to retrieve apikey
  */
-function bng701_get_apikey() {
+function woo_nmi_get_api_key() {
 	$thisPluginId = NMI_Config::$pluginId;
 	$settingsName = "woocommerce_{$thisPluginId}_settings";
 	$settings     = get_option( $settingsName, array() );
@@ -1285,7 +1285,7 @@ function bng701_get_apikey() {
  *
  * @return string
  */
-function bng701_generic_collectjs_query( $order, $apikey, $paymentType, $orderTotal, $payment_token = '', $include_total = true, $add_billing = false ) {
+function woo_nmi_generic_collectjs_query( $order, $apikey, $paymentType, $orderTotal, $payment_token = '', $include_total = true, $add_billing = false ) {
 	// api and type info
 	$query = '&security_key=' . urlencode( $apikey );
 	// sales info
@@ -1360,7 +1360,7 @@ function bng701_generic_collectjs_query( $order, $apikey, $paymentType, $orderTo
  *
  * @return string
  */
-function bng701_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid, $include_total = true, $include_vault_id = true, $include_billing_id = true ) {
+function woo_nmi_generic_threestep_body( $apikey, $referrer, $customervaultid, $billingid, $include_total = true, $include_vault_id = true, $include_billing_id = true ) {
 	$data = $_POST['data'];
 
 	$ipaddress         = $_SERVER['REMOTE_ADDR'];
@@ -1473,8 +1473,8 @@ function bng701_generic_threestep_body( $apikey, $referrer, $customervaultid, $b
  *
  * @throws Exception
  */
-function bng701_verify_nmi_payment_method_details( $billingId, $vaultId, $apikey ) {
-	$customerVault = bng701_getPMDetailsByBillingId( $billingId, $apikey );
+function woo_nmi_verify_nmi_payment_method_details( $billingId, $vaultId, $apikey ) {
+	$customerVault = woo_nmi_getPMDetailsByBillingId( $billingId, $apikey );
 
 	if ( empty( $customerVault ) ) {
 		throw new Exception( "Billing identifier - {$billingId} was not found in our system" );
@@ -1495,7 +1495,7 @@ function bng701_verify_nmi_payment_method_details( $billingId, $vaultId, $apikey
  *
  * @return array
  */
-function bng701_getCustomerDetails( $vaultId, $apiKey ) {
+function woo_nmi_getCustomerDetails( $vaultId, $apiKey ) {
 	$apiKey = sanitize_text_field( $apiKey );
 
 	// Create body
@@ -1506,7 +1506,7 @@ function bng701_getCustomerDetails( $vaultId, $apiKey ) {
 		'customer_vault_id' => $vaultId,
 	];
 
-	$response = bng701_doQueryApi( $body );
+	$response = woo_nmi_do_query( $body );
 
 	 // get all the billing details
 	if ( isset( $response['customer_vault']['customer'] ) ) {
@@ -1523,7 +1523,7 @@ function bng701_getCustomerDetails( $vaultId, $apiKey ) {
  *
  * @return array
  */
-function bng701_getPMDetailsByBillingId( $billingid, $apikey ) {
+function woo_nmi_getPMDetailsByBillingId( $billingid, $apikey ) {
 	// gather payment methods for this customervaultid
 	$APIKey = sanitize_text_field( $apikey );
 
@@ -1535,7 +1535,7 @@ function bng701_getPMDetailsByBillingId( $billingid, $apikey ) {
 		'billing_id'  => $billingid,
 	];
 
-	$response = bng701_doQueryApi( $body );
+	$response = woo_nmi_do_query( $body );
 
 	// gets details on bng entry by billing id and api key
 	if ( isset( $response['customer_vault'] ) ) {
@@ -1551,7 +1551,7 @@ function bng701_getPMDetailsByBillingId( $billingid, $apikey ) {
  *
  * @return array
  */
-function bng701_getTransaction( $trans_id, $apikey ) {
+function woo_nmi_getTransaction( $trans_id, $apikey ) {
 	// Create body
 	$body = [
 		'keytext'        => $apikey,
@@ -1559,7 +1559,7 @@ function bng701_getTransaction( $trans_id, $apikey ) {
 		'transaction_id' => $trans_id,
 	];
 
-	$response = bng701_doQueryApi( $body );
+	$response = woo_nmi_do_query( $body );
 
 	if ( isset( $response['transaction'] ) ) {
 		return $response['transaction'];
@@ -1573,7 +1573,7 @@ function bng701_getTransaction( $trans_id, $apikey ) {
  *
  * @return array - an array of query api response
  */
-function bng701_doQueryApi( $body ) {
+function woo_nmi_do_query( $body ) {
 	$url = 'https://secure.networkmerchants.com/api/query.php';
 
 	$body = http_build_query( $body );
@@ -1607,7 +1607,7 @@ function bng701_doQueryApi( $body ) {
  *
  * @return array
  */
-function bng701_doCurl( $query ) {
+function woo_nmi_doCurl( $query ) {
 	$ch = curl_init();
 	curl_setopt( $ch, CURLOPT_URL, 'https://secure.networkmerchants.com/api/transact.php' );
 	curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 30 );
@@ -1638,17 +1638,17 @@ function bng701_doCurl( $query ) {
 // endregion
 
 // add action hooks to plugin
-add_action( 'wp_enqueue_scripts', 'bng701_pw_load_scripts' );
+add_action( 'wp_enqueue_scripts', 'woo_nmi_pw_load_scripts' );
 
-add_action( 'wp_ajax_nopriv_bng701_stepOne_addBilling', 'bng701_stepOne_addBilling' );
-add_action( 'wp_ajax_bng701_stepOne_addBilling', 'bng701_stepOne_addBilling' );
+add_action( 'wp_ajax_nopriv_woo_nmi_stepOne_addBilling', 'woo_nmi_stepOne_addBilling' );
+add_action( 'wp_ajax_woo_nmi_stepOne_addBilling', 'woo_nmi_stepOne_addBilling' );
 
-add_action( 'wp_ajax_nopriv_bng701_stepOne', 'bng701_stepOne' );
-add_action( 'wp_ajax_bng701_stepOne', 'bng701_stepOne' );
+add_action( 'wp_ajax_nopriv_woo_nmi_stepOne', 'woo_nmi_stepOne' );
+add_action( 'wp_ajax_woo_nmi_stepOne', 'woo_nmi_stepOne' );
 
-add_action( 'wp_ajax_nopriv_bng701_deletePaymentMethod', 'bng701_deletePaymentMethod' );
-add_action( 'wp_ajax_bng701_deletePaymentMethod', 'bng701_deletePaymentMethod' );
+add_action( 'wp_ajax_nopriv_woo_nmi_deletePaymentMethod', 'woo_nmi_deletePaymentMethod' );
+add_action( 'wp_ajax_woo_nmi_deletePaymentMethod', 'woo_nmi_deletePaymentMethod' );
 
-add_action( 'woocommerce_order_actions', 'bng701_add_order_capture_charge_action' );
-add_action( 'woocommerce_order_action_capture_charge_action', 'bng701_process_capture_charge_action' );
+add_action( 'woocommerce_order_actions', 'woo_nmi_add_order_capture_charge_action' );
+add_action( 'woocommerce_order_action_capture_charge_action', 'woo_nmi_process_capture_charge_action' );
 ?>

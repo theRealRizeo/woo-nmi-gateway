@@ -74,13 +74,6 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			'subscription_payment_method_delayed_change',
 			'multiple_subscriptions',
 		);
-
-		if ( ( ngfw_fs()->is_not_paying() || ngfw_fs()->is_free_plan() ) && NMI_Config::$projectType == 'nmi' ) {
-			$this->supports = array(
-				'refunds',
-				'tokenization',
-			);
-		}
 	}
 
 	/**
@@ -333,8 +326,8 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 * @return array an array of saved payment methods
 	 */
 	function get_saved_payment_method_list( $savedMethods ) {
-		if ( empty( $savedMethods ) || ngfw_fs()->is_plan( 'Premium' ) || NMI_Config::$projectType === 'bng' ) {
-			bng701_screen_payment_methods_against_nmi( $this->apikey );
+		if ( empty( $savedMethods ) || NMI_Config::$projectType === 'bng' ) {
+			woo_nmi_screen_payment_methods_against_nmi( $this->apikey );
 		} else {
 			// else delete pm in woo and delete vault in nmi
 			$paymentTokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
@@ -349,7 +342,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				$query .= '&customer_vault_id=' . urlencode( $customerVaultId );
 				$query .= '&security_key=' . urlencode( $this->apikey );
 
-				$response = bng701_doCurl( $query );
+				$response = woo_nmi_doCurl( $query );
 				WC_NMI_Logger::log( $response['responsetext'] );
 			}
 		}
@@ -384,48 +377,48 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 		// fix for having product names with double quotes - thanks to abirchler for pointing this one out
 		$data = array(
-			'orderid'           => bng701_cleanTheData( $order_id, 'integer' ),
-			'transactiontype'   => bng701_cleanTheData( $this->transactiontype, 'string' ),
-			'paymenttype'       => bng701_cleanTheData( $this->paymenttype, 'string' ),
+			'orderid'           => woo_nmi_cleanTheData( $order_id, 'integer' ),
+			'transactiontype'   => woo_nmi_cleanTheData( $this->transactiontype, 'string' ),
+			'paymenttype'       => woo_nmi_cleanTheData( $this->paymenttype, 'string' ),
 			'user_email'        => sanitize_email( $user_email ),
 			'ordertotal'        => $order_total,
 			'ordertax'          => $order_tax,
 			'ordershipping'     => $order_shipping,
-			'billingfirstname'  => bng701_cleanTheData( $order->get_billing_first_name(), 'string' ),
-			'billinglastname'   => bng701_cleanTheData( $order->get_billing_last_name(), 'string' ),
-			'billingaddress1'   => bng701_cleanTheData( $order->get_billing_address_1(), 'string' ),
-			'billingcity'       => bng701_cleanTheData( $order->get_billing_city(), 'string' ),
-			'billingstate'      => bng701_cleanTheData( $order->get_billing_state(), 'string' ),
-			'billingpostcode'   => bng701_cleanTheData( $order->get_billing_postcode(), 'string' ),
-			'billingcountry'    => bng701_cleanTheData( $order->get_billing_country(), 'string' ),
+			'billingfirstname'  => woo_nmi_cleanTheData( $order->get_billing_first_name(), 'string' ),
+			'billinglastname'   => woo_nmi_cleanTheData( $order->get_billing_last_name(), 'string' ),
+			'billingaddress1'   => woo_nmi_cleanTheData( $order->get_billing_address_1(), 'string' ),
+			'billingcity'       => woo_nmi_cleanTheData( $order->get_billing_city(), 'string' ),
+			'billingstate'      => woo_nmi_cleanTheData( $order->get_billing_state(), 'string' ),
+			'billingpostcode'   => woo_nmi_cleanTheData( $order->get_billing_postcode(), 'string' ),
+			'billingcountry'    => woo_nmi_cleanTheData( $order->get_billing_country(), 'string' ),
 			'billingemail'      => sanitize_email( $order->get_billing_email() ),
 			'billingphone'      => sanitize_text_field( $order->get_billing_phone() ),
-			'billingcompany'    => bng701_cleanTheData( $order->get_billing_company(), 'string' ),
-			'billingaddress2'   => bng701_cleanTheData( $order->get_billing_address_2(), 'string' ),
-			'shippingfirstname' => bng701_cleanTheData( $order->get_shipping_first_name(), 'string' ),
-			'shippinglastname'  => bng701_cleanTheData( $order->get_shipping_last_name(), 'string' ),
-			'shippingaddress1'  => bng701_cleanTheData( $order->get_shipping_address_1(), 'string' ),
-			'shippingcity'      => bng701_cleanTheData( $order->get_shipping_city(), 'string' ),
-			'shippingstate'     => bng701_cleanTheData( $order->get_shipping_state(), 'string' ),
+			'billingcompany'    => woo_nmi_cleanTheData( $order->get_billing_company(), 'string' ),
+			'billingaddress2'   => woo_nmi_cleanTheData( $order->get_billing_address_2(), 'string' ),
+			'shippingfirstname' => woo_nmi_cleanTheData( $order->get_shipping_first_name(), 'string' ),
+			'shippinglastname'  => woo_nmi_cleanTheData( $order->get_shipping_last_name(), 'string' ),
+			'shippingaddress1'  => woo_nmi_cleanTheData( $order->get_shipping_address_1(), 'string' ),
+			'shippingcity'      => woo_nmi_cleanTheData( $order->get_shipping_city(), 'string' ),
+			'shippingstate'     => woo_nmi_cleanTheData( $order->get_shipping_state(), 'string' ),
 			'shippingpostcode'  => sanitize_text_field( $order->get_shipping_postcode() ),
-			'shippingcountry'   => bng701_cleanTheData( $order->get_shipping_country(), 'string' ),
+			'shippingcountry'   => woo_nmi_cleanTheData( $order->get_shipping_country(), 'string' ),
 			'shippingphone'     => sanitize_text_field( $order->get_billing_phone() ),
-			'shippingcompany'   => bng701_cleanTheData( $order->get_shipping_company(), 'string' ),
-			'shippingaddress2'  => bng701_cleanTheData( $order->get_shipping_address_2(), 'string' ),
+			'shippingcompany'   => woo_nmi_cleanTheData( $order->get_shipping_company(), 'string' ),
+			'shippingaddress2'  => woo_nmi_cleanTheData( $order->get_shipping_address_2(), 'string' ),
 			'security'          => wp_create_nonce( 'checkout-nonce' ),
 		);
 
 		if ( $this->apikey != '' ) {
 			$paymentMethods = array();
 
-			if ( ngfw_fs()->is_plan( 'Premium' ) || NMI_Config::$projectType == 'bng' ) {
+			if ( NMI_Config::$projectType == 'bng' ) {
 				if ( is_user_logged_in() && $this->savepaymentmethodtoggle == 'on' ) {
 					// display saved pm's (new way)
 					// get the saved payment tokens from WC
 					$temp_payment_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
 
 					if ( ! empty( $temp_payment_tokens ) ) {
-						bng701_screen_payment_methods_against_nmi( $this->apikey );
+						woo_nmi_screen_payment_methods_against_nmi( $this->apikey );
 
 						// after screening against nmi, grab data again for display
 						$highlight      = false;
@@ -442,7 +435,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 						foreach ( $payment_tokens as $pt ) {
 							$billing_id    = $pt->get_token();
-							$paymentmethod = bng701_getPMDetailsByBillingId( $billing_id, $this->apikey );
+							$paymentmethod = woo_nmi_getPMDetailsByBillingId( $billing_id, $this->apikey );
 							$type          = $pt->get_type();
 							if ( ! empty( $sub_billingId ) && $sub_billingId === $billing_id ) {
 								$highlight = true;
@@ -457,7 +450,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 								$thisPaymentMethod['ccNumber'] = $paymentmethod['customer']['billing']['cc_number'];
 								$thisPaymentMethod['ccExp']    = substr_replace( $paymentmethod['customer']['billing']['cc_exp'], '/', 2, 0 );
 
-								$cardtype                  = bng701_getCardType( $paymentmethod['customer']['billing']['cc_type'] );
+								$cardtype                  = woo_nmi_get_card_type( $paymentmethod['customer']['billing']['cc_type'] );
 								$thisPaymentMethod['card'] = plugins_url( "img/icon_cc_{$cardtype}.png", __FILE__ );
 								if ( $pt->get_data()['card_type'] == 'unknown' ) {
 									$pt->update_meta_data( 'card_type', $cardtype );
@@ -481,7 +474,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				}
 			}
 
-			bng701_html( $this->savepaymentmethodtoggle, $this->tokenizationkey, $data, $order_id, $paymentMethods );
+			woo_nmi_payment_html( $this->savepaymentmethodtoggle, $this->tokenizationkey, $data, $order_id, $paymentMethods );
 		} else {
 			WC_NMI_Logger::log( "Error : Current user {$userid}, does not have an api key" );
 			?>
@@ -502,8 +495,8 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		if ( $this->apikey ) {
 			// this assumes the store only saves payment methods using our gateway
 			if ( is_user_logged_in() && $this->savepaymentmethodtoggle == 'on' ) {
-				if ( ngfw_fs()->is_plan( 'Premium' ) || NMI_Config::$projectType === 'bng' ) {
-					bng701_html( $this->savepaymentmethodtoggle, $this->tokenizationkey, array( 'isAcctScreen' => true ) );
+				if ( NMI_Config::$projectType === 'bng' ) {
+					woo_nmi_payment_html( $this->savepaymentmethodtoggle, $this->tokenizationkey, array( 'isAcctScreen' => true ) );
 
 					?>
 						<script type="text/javascript">
@@ -521,7 +514,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 								event.preventDefault();
 								event.target.disabled = true;
 								if (storedVariables.useTokenization()) submitOrderUsingOldPaymentMethod();
-								else await bng701_cc_validate(true);
+								else await woo_nmi_cc_validate(true);
 							});
 						</script>
 					<?php
@@ -550,7 +543,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 						deleteObj.setAttribute('href', 'javascript:;');
 						deleteObj.setAttribute('tokenId', linkArray[5]);
 
-						var toContinue = await bng701_deletePM( deleteObj, true );
+						var toContinue = await woo_nmi_deletePM( deleteObj, true );
 						if (typeof(toContinue) === "boolean") {
 							if ( !toContinue ) {
 								return false;
@@ -575,7 +568,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 * @return array $payment meta
 	 */
 	function add_admin_change_payment_method_form( $payment_meta, $subscription ) {
-		if ( class_exists( 'WC_Subscriptions' ) && ( ngfw_fs()->is_plan( 'Premium' ) || NMI_Config::$projectType === 'bng' ) ) {
+		if ( class_exists( 'WC_Subscriptions' ) && NMI_Config::$projectType === 'bng' ) {
 			$vaultId   = empty( $subscription->get_meta( '_nmi_gateway_vault_id' ) ) ? 'null' : $subscription->get_meta( '_nmi_gateway_vault_id' );
 			$billingId = empty( $subscription->get_meta( '_nmi_gateway_billing_id' ) ) ? 'null' : $subscription->get_meta( '_nmi_gateway_billing_id' );
 
@@ -649,13 +642,13 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			// addbilling action
 			// check order status
 			if ( $acctScreen || ( ! empty( $order ) && $order->get_status() != 'Completed' ) ) {
-				$result = bng701_start_complete_order_process( $APIKey, $token );
+				$result = woo_nmi_start_complete_order_process( $APIKey, $token );
 
 				if ( $result['result'] == 1 ) {
 					// pull values from response
 					$billingid       = isset( $result['billing']['billing-id'] ) ? $result['billing']['billing-id'] : '';
 					$customervaultid = isset( $result['customer-vault-id'] ) ? $result['customer-vault-id'] : '';
-					$newPmToken      = bng701_create_woocommerce_payment_token( $billingid, $customervaultid, $this->apikey );
+					$newPmToken      = woo_nmi_create_woocommerce_payment_token( $billingid, $customervaultid, $this->apikey );
 
 					// if acct screen dont do this just go to complete
 					if ( ! $acctScreen || ( function_exists( 'wcs_is_subscription' ) && ! wcs_is_subscription( $orderid ) ) ) {
@@ -718,7 +711,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			// sale action
 			// check order status
 			if ( $order->get_status() != 'Completed' ) {
-				$result = bng701_start_complete_order_process( $APIKey, $token );
+				$result = woo_nmi_start_complete_order_process( $APIKey, $token );
 
 				if ( $result['result'] == 1 ) {
 					$orderStatus     = 'success';
@@ -746,18 +739,18 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 						}
 					}
 					if ( $donotcreate === false ) {
-						$newPmToken = bng701_create_woocommerce_payment_token( $billingid, $customervaultid, $this->apikey );
+						$newPmToken = woo_nmi_create_woocommerce_payment_token( $billingid, $customervaultid, $this->apikey );
 					}
 				}
 			}
 		}
 
-		if ( class_exists( 'WC_Subscriptions' ) && ( NMI_Config::$projectType == 'bng' || ngfw_fs()->is_plan( 'Premium' ) ) ) {
+		if ( class_exists( 'WC_Subscriptions' ) && ( NMI_Config::$projectType == 'bng' ) ) {
 			if ( $orderStatus == 'success' && ( wcs_order_contains_resubscribe( $order ) || wcs_order_contains_renewal( $order ) || wcs_order_contains_subscription( $order ) || wcs_is_subscription( $orderid ) ) ) {
-				bng701_update_paymentmethod_subscription( $newPmToken, $order, $billingid );
+				woo_nmi_update_paymentmethod_subscription( $newPmToken, $order, $billingid );
 			}
 		}
-		bng701_complete_order( $order, $orderStatus, $result, $trans_type, $this, $acctScreen );
+		woo_nmi_complete_order( $order, $orderStatus, $result, $trans_type, $this, $acctScreen );
 	}
 
 	/**
@@ -807,7 +800,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 					// means user is trying to change payment method
 					if ( function_exists( 'wcs_is_subscription' ) && wcs_is_subscription( $order_id ) && $orderTotal == 0 ) {
-						bng701_update_paymentmethod_subscription( $oldPm, $order, $billingId );
+						woo_nmi_update_paymentmethod_subscription( $oldPm, $order, $billingId );
 
 						wp_safe_redirect( wc_get_endpoint_url( 'subscriptions', '', wc_get_page_permalink( 'myaccount' ) ) );
 						exit();
@@ -816,7 +809,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 					$savePm = ''; // reset savePm
 				} elseif ( $savePm == 'on' ) {
 					// use this when saving new payment methods to a customer vault
-					bng701_create_new_ids( $paymentTokens, $vaultId, $billingId );
+					woo_nmi_create_new_ids( $paymentTokens, $vaultId, $billingId );
 					$query .= '&customer_vault=add_billing';
 				}
 
@@ -826,8 +819,8 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			} elseif ( $hasVault == 'false' ) {
 				// customer doesn't have a vault so create
 				if ( $savePm == 'on' ) {
-					$billingId = bng701_create_random_string();
-					$vaultId   = bng701_create_random_string();
+					$billingId = woo_nmi_create_random_string();
+					$vaultId   = woo_nmi_create_random_string();
 					$query    .= '&customer_vault=add_customer';
 				}
 			}
@@ -837,15 +830,15 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$query .= '&billing_id=' . urlencode( $billingId );
 
 		if ( function_exists( 'wcs_is_subscription' ) && wcs_is_subscription( $order_id ) && $orderTotal == 0 ) {
-			$query .= bng701_generic_collectjs_query( $order, $this->apikey, $paymentType, $orderTotal, $payment_token, false );
+			$query .= woo_nmi_generic_collectjs_query( $order, $this->apikey, $paymentType, $orderTotal, $payment_token, false );
 		} elseif ( $acctScreen === true ) {
-			$query .= bng701_generic_collectjs_query( $order, $this->apikey, $paymentType, $orderTotal, $payment_token, false, true );
+			$query .= woo_nmi_generic_collectjs_query( $order, $this->apikey, $paymentType, $orderTotal, $payment_token, false, true );
 		} else {
-			$query .= bng701_generic_collectjs_query( $order, $this->apikey, $paymentType, $orderTotal, $payment_token );
+			$query .= woo_nmi_generic_collectjs_query( $order, $this->apikey, $paymentType, $orderTotal, $payment_token );
 			$query .= '&type=' . $transactionType;
 		}
 
-		$responses = bng701_doCurl( $query );
+		$responses = woo_nmi_doCurl( $query );
 
 		$orderStatus = 'error';
 		if ( $responses['response'] == '1' ) {
@@ -854,12 +847,12 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			// add payment to woocommerce if customer asks to save
 			$newPmToken = '';
 			if ( $savePm == 'on' ) {
-				$newPmToken = bng701_create_woocommerce_payment_token( $billingId, $vaultId, $this->apikey );
+				$newPmToken = woo_nmi_create_woocommerce_payment_token( $billingId, $vaultId, $this->apikey );
 			}
 
-			if ( class_exists( 'WC_Subscriptions' ) && ( NMI_Config::$projectType == 'bng' || ngfw_fs()->is_plan( 'Premium' ) ) ) {
+			if ( class_exists( 'WC_Subscriptions' ) && NMI_Config::$projectType == 'bng' ) {
 				if ( $orderStatus == 'success' && ( wcs_order_contains_resubscribe( $order ) || wcs_order_contains_renewal( $order ) || wcs_order_contains_subscription( $order ) || wcs_is_subscription( $order_id ) ) ) {
-					bng701_update_paymentmethod_subscription( $newPmToken, $order, $billingId );
+					woo_nmi_update_paymentmethod_subscription( $newPmToken, $order, $billingId );
 				}
 			}
 		}
@@ -877,7 +870,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			$result['sec-code'] = 'WEB';
 		}
 
-		bng701_complete_order( $order, $orderStatus, $result, $transactionType, $this, $acctScreen );
+		woo_nmi_complete_order( $order, $orderStatus, $result, $transactionType, $this, $acctScreen );
 	}
 
 	/**
@@ -907,7 +900,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 */
 	function cancel_bng_subscription( $subscription ) {
 		WC_Subscriptions_Manager::cancel_subscriptions_for_order( $subscription );
-		bng701_remove_payment_meta_from_suscription( $subscription );
+		woo_nmi_remove_payment_meta_from_suscription( $subscription );
 	}
 
 	/**
@@ -1185,7 +1178,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		// Do your refund here. Refund $amount for the order with ID $order_id
 		$order         = wc_get_order( $order_id );
 		$total         = $order->get_total();
-		$transaction   = bng701_getTransaction( $order->get_transaction_id(), $this->apikey );
+		$transaction   = woo_nmi_getTransaction( $order->get_transaction_id(), $this->apikey );
 		$transactionid = $order->get_transaction_id();
 		$isrefunded    = 'N';
 		$toVoid        = $transaction['condition'] == 'pendingsettlement';
@@ -1266,7 +1259,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			$billingId = $order->get_meta( '_nmi_gateway_billing_id' );
 			$vaultId   = $order->get_meta( '_nmi_gateway_vault_id' );
 
-			bng701_verify_nmi_payment_method_details( $billingId, $vaultId, $this->apikey );
+			woo_nmi_verify_nmi_payment_method_details( $billingId, $vaultId, $this->apikey );
 
 			if ( empty( $cc_number ) ) {
 				$paymentType = 'check';
@@ -1274,12 +1267,12 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				$paymentType = 'creditcard';
 			}
 
-			$query  = bng701_generic_collectjs_query( $order, $this->apikey, $paymentType, $amount_to_charge );
+			$query  = woo_nmi_generic_collectjs_query( $order, $this->apikey, $paymentType, $amount_to_charge );
 			$query .= '&customer_vault_id=' . urlencode( $vaultId );
 			$query .= '&billing_id=' . urlencode( $billingId );
 			$query .= '&type=sale';
 
-			$responses = bng701_doCurl( $query );
+			$responses = woo_nmi_doCurl( $query );
 
 			if ( $responses['response'] != '1' ) {
 				return new WP_Error( $responses['responsetext'] );
@@ -1321,7 +1314,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 		if ( 'null' != $vaultId && 'null' != $billingId ) {
 			try {
-				bng701_verify_nmi_payment_method_details( $billingId, $vaultId, $this->apikey );
+				woo_nmi_verify_nmi_payment_method_details( $billingId, $vaultId, $this->apikey );
 			} catch ( Exception $ex ) {
 				WC_NMI_Logger::log( $ex->getMessage() );
 				throw new Exception( __( $ex->getMessage(), NMI_Config::$pluginId ) );
@@ -1397,7 +1390,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			'result_limit' => 1,
 		];
 
-		return bng701_doQueryApi( $body );
+		return woo_nmi_do_query( $body );
 	}
 }
 
