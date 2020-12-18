@@ -1091,7 +1091,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			if( !$this->get_nmi_js_response() ) {
 
 				// Check for CC details filled or not
-				if ( empty( $_POST['nmi-card-number'] ) || empty( $_POST['nmi-card-expiry'] ) || empty( $_POST['nmi-card-cvc'] ) ) {
+				if ( empty( $_POST['woo-nmi-card-number'] ) || empty( $_POST['woo-nmi-card-expiry'] ) || empty( $_POST['woo-nmi-card-cvc'] ) ) {
 					throw new Exception( __( 'Credit card details cannot be left incomplete.', 'wc-nmi' ) );
 				}
 			}
@@ -1099,11 +1099,11 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			if( $js_response = $this->get_nmi_js_response() ) {
 				$post_data['payment_token'] = $js_response['token'];
 			} else {
-				$expiry = explode( ' / ', wc_clean( $_POST['nmi-card-expiry'] ) );
+				$expiry = explode( ' / ', wc_clean( $_POST['woo-nmi-card-expiry'] ) );
 				$expiry[1] = substr( $expiry[1], -2 );
-				$post_data['ccnumber']	= wc_clean( $_POST['nmi-card-number'] );
+				$post_data['ccnumber']	= wc_clean( $_POST['woo-nmi-card-number'] );
 				$post_data['ccexp']		= $expiry[0] . $expiry[1];
-				$post_data['cvv']		= wc_clean( $_POST['nmi-card-cvc'] );
+				$post_data['cvv']		= wc_clean( $_POST['woo-nmi-card-cvc'] );
 			}
 
 			$description = sprintf( __( '%s - Order %s', 'wc-nmi' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $order->get_order_number() );
