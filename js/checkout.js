@@ -149,7 +149,7 @@ jQuery( function( $ ) {
 		},
 
 		isNMIChosen: function() {
-			return $( '#payment_method_nmi' ).is( ':checked' ) && ( ! $( 'input[name="wc-nmi-payment-token"]:checked' ).length || 'new' === $( 'input[name="wc-nmi-payment-token"]:checked' ).val() );
+			return $( '#payment_method_nmi_gateway' ).is( ':checked' ) && ( ! $( 'input[name="wc-nmi-payment-token"]:checked' ).length || 'new' === $( 'input[name="wc-nmi-payment-token"]:checked' ).val() );
 		},
 
 		hasToken: function() {
@@ -254,19 +254,6 @@ jQuery( function( $ ) {
 
 		onNMIResponse: function( response ) {
             console.log(response);
-
-            if( response.card.type != null ) {
-                wc_nmi_checkout_params.allowed_card_types.forEach(function (card_type) {
-                    if( response.card.type == card_type.replace( 'diners-club', 'diners' ) ) {
-                        card_allowed = true;
-                    }
-                });
-
-                if( ! card_allowed ) {
-                    $( document.body ).trigger( 'nmiError', wc_nmi_checkout_params.card_disallowed_error );
-					return false;
-                }
-            }
 
 			wc_nmi_checkout.form.append( "<input type='hidden' class='nmi_js_token' name='nmi_js_token' value='" + response.token + "'/>" );
             wc_nmi_checkout.form.append( "<input type='hidden' class='nmi_js_response' name='nmi_js_response' value='" + JSON.stringify(response) + "'/>" );

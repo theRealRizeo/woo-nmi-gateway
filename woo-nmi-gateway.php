@@ -80,8 +80,9 @@ if ( function_exists( 'ngfw_fs' ) ) {
 
 				add_filter( 'woocommerce_payment_gateways', 'wc_Custom_add_bng_gateway' );
 				// Include the WooCommerce Custom Payment Gateways classes.
+				require_once plugin_dir_path( __FILE__ ) . 'includes/config.php';
+				require_once plugin_dir_path( __FILE__ ) . 'includes/logger.php';
 				require_once plugin_dir_path( __FILE__ ) . 'includes/gateway.php';
-				require_once plugin_dir_path( __FILE__ ) . 'includes/api.php';
 			}
 		}
 

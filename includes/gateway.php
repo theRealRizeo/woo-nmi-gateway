@@ -3,7 +3,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
 
-require_once plugin_dir_path( __FILE__ ) . 'config.php';
 
 class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
@@ -18,8 +17,6 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$this->gatewayURL         = NMI_Config::$pluginUrl;
 		$this->chosen             = true; // set plugin to be selected on checkout page
 
-		// logger and timestamp
-		$this->logger = new WC_Log_Handler_File();
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -35,11 +32,12 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$this->redirecturl             = $this->get_option( 'redirecturl' );
 		$this->savepaymentmethodtoggle = $this->get_option( 'savepaymentmethodstoggle' );
 		$this->paymenttype             = $this->get_option( 'paymenttype' );
+		$this->debug                   = 'yes' === $this->get_option( 'debug', 'no' );
 
 		// Actions.
 		add_action( 'woocommerce_api_callback', array( $this, 'successful_request' ) );
-		add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page' ) );
-		add_action( 'woocommerce_confirm_order_' . $this->id, array( $this, 'confirm_order_page' ) );
+		//add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page' ) );
+		//add_action( 'woocommerce_confirm_order_' . $this->id, array( $this, 'confirm_order_page' ) );
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'validate_options' ) );
 		add_action( 'after_woocommerce_add_payment_method', array( $this, 'add_bng_gateway_payment_method_form' ) );
 		add_action( 'woocommerce_after_account_payment_methods', array( $this, 'add_nmi_delete_action_to_woocommerce' ) );
@@ -205,6 +203,14 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				'desc_tip'    => true,
 				'default'     => '',
 			),
+
+			'debug' => array(
+				'title'         => __( 'Debug Log' ),
+				'type'          => 'checkbox',
+				'label'         => __( 'Enable logging' ),
+				'default'       => 'no',
+				'description'   => __( 'Log Gateway events, such as IPN requests' ),
+			)
 		);
 	}
 
@@ -344,12 +350,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 				$query .= '&security_key=' . urlencode( $this->apikey );
 
 				$response = bng701_doCurl( $query );
-
-				if ( $response['response'] == 1 ) {
-					$this->logger->handle( time(), 'info', $response['responsetext'], array() );
-				} else {
-					$this->logger->handle( time(), 'error', $response['responsetext'], array() );
-				}
+				WC_NMI_Logger::log( $response['responsetext'] );
 			}
 		}
 		return wc_get_account_saved_payment_methods_list( [], get_current_user_id() );
@@ -482,7 +483,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 			bng701_html( $this->savepaymentmethodtoggle, $this->tokenizationkey, $data, $order_id, $paymentMethods );
 		} else {
-			$this->logger->handle( time(), 'error', "Current user {$userid}, does not have an api key", array() );
+			WC_NMI_Logger::log( "Error : Current user {$userid}, does not have an api key" );
 			?>
 			<div style="color: red;font-size:16px;border:1px solid red;border-radius:10px;background-color:#FDFDFD;padding:15px;">
 				<b>Checkout is not available at this time.</b><br>
@@ -615,7 +616,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 			bng701_html( $this->savepaymentmethodtoggle, $this->tokenizationkey, $data, $order_id, $paymentMethods );
 		} else {
-			$this->logger->handle( time(), 'error', "Current user {$userid}, does not have an api key", array() );
+			WC_NMI_Logger::log( "Error : Current user {$userid}, does not have an api key " );
 			?>
 			<div style="color: red;font-size:16px;border:1px solid red;border-radius:10px;background-color:#FDFDFD;padding:15px;">
 				<b>Checkout is not available at this time.</b><br>
@@ -1107,9 +1108,8 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 			$description = sprintf( __( '%s - Order %s', 'wc-nmi' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $order->get_order_number() );
 
-			if( $this->line_items ) {
-				$description .= ' (' . $this->get_line_items( $order ) . ')';
-			}
+			$description .= ' (' . $this->get_line_items( $order ) . ')';
+			
 
 			$payment_args = array(
 				'orderid'	 		=> $order->get_order_number(),
@@ -1191,11 +1191,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 		} catch ( Exception $e ) {
 			wc_add_notice( sprintf( __( 'Gateway Error: %s', 'wc-nmi' ), $e->getMessage() ), 'error' );
-			$this->logger->handle( time(), 'error', sprintf( __( 'Gateway Error: %s', 'wc-nmi' ), $e->getMessage() ), array() );
-
-			if( is_wp_error( $response ) && $response = $response->get_error_data() ) {
-                $order->add_order_note( sprintf( __( 'NMI failure reason: %s', 'wc-nmi' ), $response['response_code'] . ' - ' . $response['responsetext'] ) );
-            }
+			WC_NMI_Logger::log( sprintf( __( 'Gateway Error: %s', 'wc-nmi' ), $e->getMessage() ) );
 
 			do_action( 'wc_gateway_nmi_process_payment_error', $e, $order );
 
@@ -1229,8 +1225,6 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 	function remote_request( $args ) {
 
-		$gateway_debug = ( $this->logging && $this->debugging );
-
         $request_url = 'https://secure.networkmerchants.com/api/transact.php';
 
         $auth_params = array( 'security_key' => $this->apikey );
@@ -1262,8 +1256,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$result = is_wp_error( $response ) ? $response : wp_remote_retrieve_body( $response );
 
         // Saving to Log here
-		if( $gateway_debug ) {
+		if( $this->debug ) {
 			$message = sprintf( "\nPosting to: \n%s\nRequest: \n%sResponse: \n%s", $request_url, print_r( $args, 1 ), print_r( $result, 1 ) );
+			WC_NMI_Logger::log( $message );
 		}
 
 		remove_filter( 'http_request_timeout', array( $this, 'http_request_timeout' ), 9999 );
@@ -1294,6 +1289,13 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
         return $result;
 
+	}
+
+	/**
+	 * HTTP timeout
+	 */
+	public function http_request_timeout( $timeout_value ) {
+		return 45; // 45 seconds. Too much for production, only for testing.
 	}
 
 	function get_line_items( $order ) {
@@ -1417,7 +1419,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			}
 			return $responses;
 		} catch ( Exception $ex ) {
-			$this->logger->handle( time(), 'error', __( $ex->getMessage(), NMI_Config::$pluginId ), array() );
+			WC_NMI_Logger::log( $ex->getMessage() );
 			return new WP_Error( $ex->getMessage() );
 		}
 	}
@@ -1437,12 +1439,12 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 	 */
 	function validate_admin_paymentmethod_change( $payment_meta ) {
 		if ( ! isset( $payment_meta['post_meta']['_nmi_gateway_vault_id']['value'] ) || empty( $payment_meta['post_meta']['_nmi_gateway_vault_id']['value'] ) ) {
-			$this->logger->handle( time(), 'error', __( 'Customer vault id is required to update payment method', NMI_Config::$pluginId ), array() );
+			WC_NMI_Logger::log( 'Customer vault id is required to update payment method' );
 			throw new Exception( 'A customer vault identifier is required.' );
 		}
 
 		if ( ! isset( $payment_meta['post_meta']['_nmi_gateway_billing_id']['value'] ) || empty( $payment_meta['post_meta']['_nmi_gateway_billing_id']['value'] ) ) {
-			$this->logger->handle( time(), 'error', __( 'Billing id is required to update payment method', NMI_Config::$pluginId ), array() );
+			WC_NMI_Logger::log( 'Billing id is required to update payment method' );
 			throw new Exception( 'A billing identifier is required.' );
 		}
 
@@ -1454,7 +1456,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			try {
 				bng701_verify_nmi_payment_method_details( $billingId, $vaultId, $this->apikey );
 			} catch ( Exception $ex ) {
-				$this->logger->handle( time(), 'error', __( $ex->getMessage(), NMI_Config::$pluginId ), array() );
+				WC_NMI_Logger::log( $ex->getMessage() );
 				throw new Exception( __( $ex->getMessage(), NMI_Config::$pluginId ) );
 			}
 		}
@@ -1485,13 +1487,13 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 
 		if ( $valid === true ) {
 			if ( ! empty( $msg ) ) {
-				$this->logger->handle( time(), 'info', $msg, array() );
+				WC_NMI_Logger::log( $msg );
 				$this->add_error( $msg );
 				$this->display_errors();
 			}
 			$this->process_admin_options();
 		} else {
-			$this->logger->handle( time(), 'error', $error, array() );
+			WC_NMI_Logger::log( $error );
 			$this->add_error( $error );
 			$this->display_errors();
 		}
