@@ -15,7 +15,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$this->method_title       = __( NMI_Config::$pluginMethodTitle, 'woo-nmi-gateway' );
 		$this->method_description = __( NMI_Config::$pluginDescription, 'woo-nmi-gateway' );
 		$this->gatewayURL         = NMI_Config::$pluginUrl;
-		$this->chosen             = true; // set plugin to be selected on checkout page
+		$this->chosen             = false; // set plugin to be selected on checkout page
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -74,7 +74,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			'multiple_subscriptions',
 		);
 	}
-
+	
 	/**
 	 * Admin Panel Options.
 	 */
