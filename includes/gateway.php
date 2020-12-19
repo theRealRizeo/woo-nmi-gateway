@@ -33,6 +33,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$this->paymenttype             = $this->get_option( 'paymenttype' );
 		$this->debug                   = 'yes' === $this->get_option( 'debug', 'no' );
 
+		//Add card fields
+		add_filter( 'woocommerce_credit_card_form_fields', array( $this, 'add_card_field_names' ), 10, 2 );
+
 		// Actions.
 		add_action( 'woocommerce_api_callback', array( $this, 'successful_request' ) );
 		// add_action( 'woocommerce_receipt_' . $this->id, array( $this, 'receipt_page' ) );
@@ -215,22 +218,63 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		if ( $this->description ) {
 			echo wpautop( wp_kses_post( $this->description ) );
 		}
-		if ( $this->apikey && $this->tokenizationkey ) {
-			$this->collect_js_form();
+		if ( $this->apikey ) {
+			if ( $this->tokenizationkey ) {
+				$this->collect_js_form();
+			} else {
+				$cc_form           = new WC_Payment_Gateway_CC();
+				$cc_form->id       = $this->id;
+				$cc_form->supports = $this->supports;
+				$cc_form->form();
+			}
 		} else {
-			/*$cc_form           = new WC_Payment_Gateway_CC();
-			$cc_form->id       = $this->id;
-			$cc_form->supports = $this->supports;
-			$cc_form->form();*/
 			WC_NMI_Logger::log( "Error : Current user {$userid}, does not have an api key" );
 			?>
 			<div style="color: red;font-size:16px;border:1px solid red;border-radius:10px;background-color:#FDFDFD;padding:15px;">
 				<b>Checkout is not available at this time.</b><br>
 				Please try again later, once you have the API Key.
-			</div>            
+			</div>
 			<?php
 		}
 		echo '</div>';
+	}
+
+
+	/**
+	 * Set card fields
+	 * This adds card fields with names as WooCommerce by default does not put the names
+	 * 
+	 * @param array $fields - the card fields
+	 * @param int $id - the gateway id
+	 * 
+	 * @return array
+	 */
+	function add_card_field_names( $fields, $id ) {
+		if ( $id == $this->id ) {
+			$default_fields = array(
+				'card-number-field' => '<p class="form-row form-row-wide">
+					<label for="' . esc_attr( $this->id ) . '-card-number">' . esc_html__( 'Card number', 'woocommerce' ) . '&nbsp;<span class="required">*</span></label>
+					<input id="' . esc_attr( $this->id ) . '-card-number" name="' . esc_attr( $this->id ) . '-card-number" class="input-text wc-credit-card-form-card-number" inputmode="numeric" autocomplete="cc-number" autocorrect="no" autocapitalize="no" spellcheck="no" type="tel" placeholder="&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;" ' . $this->field_name( 'card-number' ) . ' />
+				</p>',
+				'card-expiry-field' => '<p class="form-row form-row-first">
+					<label for="' . esc_attr( $this->id ) . '-card-expiry">' . esc_html__( 'Expiry (MM/YY)', 'woocommerce' ) . '&nbsp;<span class="required">*</span></label>
+					<input id="' . esc_attr( $this->id ) . '-card-expiry" name="' . esc_attr( $this->id ) . '-card-expiry" class="input-text wc-credit-card-form-card-expiry" inputmode="numeric" autocomplete="cc-exp" autocorrect="no" autocapitalize="no" spellcheck="no" type="tel" placeholder="' . esc_attr__( 'MM / YY', 'woocommerce' ) . '" ' . $this->field_name( 'card-expiry' ) . ' />
+				</p>',
+				'card-cvc-field' => '<p class="form-row form-row-last">
+					<label for="' . esc_attr( $this->id ) . '-card-cvc">' . esc_html__( 'Card code', 'woocommerce' ) . '&nbsp;<span class="required">*</span></label>
+					<input id="' . esc_attr( $this->id ) . '-card-cvc" name="' . esc_attr( $this->id ) . '-card-cvc" class="input-text wc-credit-card-form-card-cvc" inputmode="numeric" autocomplete="off" autocorrect="no" autocapitalize="no" spellcheck="no" type="tel" maxlength="4" placeholder="' . esc_attr__( 'CVC', 'woocommerce' ) . '" ' . $this->field_name( 'card-cvc' ) . ' style="width:100px" />
+				</p>',
+			);
+			return $default_fields;
+		}
+		return $fields;
+	}
+
+	/**
+	 * Set the field name
+	 */
+	public function field_name( $name ) {
+		return $this->supports( 'tokenization' ) ? '' : ' name="' . esc_attr( $this->id . '-' . $name ) . '" ';
 	}
 
 	/**
@@ -977,7 +1021,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			if ( ! $this->get_nmi_js_response() ) {
 
 				// Check for CC details filled or not
-				if ( empty( $_POST['woo-nmi-card-number'] ) || empty( $_POST['woo-nmi-card-expiry'] ) || empty( $_POST['woo-nmi-card-cvc'] ) ) {
+				if ( empty( $_POST[$this->id .'-card-number'] ) || empty( $_POST[$this->id .'-card-expiry'] ) || empty( $_POST[$this->id .'-card-cvc'] ) ) {
 					throw new Exception( __( 'Credit card details cannot be left incomplete.', 'wc-nmi' ) );
 				}
 			}
@@ -985,11 +1029,11 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			if ( $js_response = $this->get_nmi_js_response() ) {
 				$post_data['payment_token'] = $js_response['token'];
 			} else {
-				$expiry                = explode( ' / ', wc_clean( $_POST['woo-nmi-card-expiry'] ) );
+				$expiry                = explode( ' / ', wc_clean( $_POST[$this->id .'-card-expiry'] ) );
 				$expiry[1]             = substr( $expiry[1], -2 );
-				$post_data['ccnumber'] = wc_clean( $_POST['woo-nmi-card-number'] );
+				$post_data['ccnumber'] = wc_clean( $_POST[$this->id .'-card-number'] );
 				$post_data['ccexp']    = $expiry[0] . $expiry[1];
-				$post_data['cvv']      = wc_clean( $_POST['woo-nmi-card-cvc'] );
+				$post_data['cvv']      = wc_clean( $_POST[$this->id .'-card-cvc'] );
 			}
 
 			$description = sprintf( __( '%1$s - Order %2$s', 'wc-nmi' ), wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ), $order->get_order_number() );

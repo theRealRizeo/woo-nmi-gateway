@@ -33,6 +33,7 @@ function nmi_woo_gateway_load() {
 		require_once plugin_dir_path( __FILE__ ) . 'includes/config.php';
 		require_once plugin_dir_path( __FILE__ ) . 'includes/logger.php';
 		require_once plugin_dir_path( __FILE__ ) . 'includes/functions.php';
+		require_once plugin_dir_path( __FILE__ ) . 'includes/api.php';
 		require_once plugin_dir_path( __FILE__ ) . 'includes/gateway.php';
 	}
 }
