@@ -218,7 +218,17 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		if ( $this->apikey && $this->tokenizationkey ) {
 			$this->collect_js_form();
 		} else {
-			$this->credit_card_form();
+			/*$cc_form           = new WC_Payment_Gateway_CC();
+			$cc_form->id       = $this->id;
+			$cc_form->supports = $this->supports;
+			$cc_form->form();*/
+			WC_NMI_Logger::log( "Error : Current user {$userid}, does not have an api key" );
+			?>
+			<div style="color: red;font-size:16px;border:1px solid red;border-radius:10px;background-color:#FDFDFD;padding:15px;">
+				<b>Checkout is not available at this time.</b><br>
+				Please try again later, once you have the API Key.
+			</div>            
+			<?php
 		}
 		echo '</div>';
 	}
@@ -1022,9 +1032,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 			if ( $response['response'] == 1 ) {
 				$order->set_transaction_id( $response['transactionid'] );
 
-				$billingid       = isset( $response['billing']['billing-id'] ) ? $response['billing']['billing-id'] : '';
-				$customervaultid = isset( $response['customer-vault-id'] ) ? $response['customer-vault-id'] : '';
-				$newPmToken      = woo_nmi_create_woocommerce_payment_token( $billingid, $customervaultid, $this->apikey );
+				//$billingid       = isset( $response['billing']['billing-id'] ) ? $response['billing']['billing-id'] : '';
+				//$customervaultid = isset( $response['customer-vault-id'] ) ? $response['customer-vault-id'] : '';
+				//$newPmToken      = woo_nmi_create_woocommerce_payment_token( $billingid, $customervaultid, $this->apikey );
 				
 
 				if ( $payment_args['type'] == 'sale' ) {
@@ -1054,8 +1064,9 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 					$order->update_status( 'on-hold', $authorized_message );
 				}
 
+				
 				//Subscription process
-				if ( ! $acctScreen || ( function_exists( 'wcs_is_subscription' ) && ! wcs_is_subscription( $orderid ) ) ) {
+				/*if ( ! $acctScreen || ( function_exists( 'wcs_is_subscription' ) && ! wcs_is_subscription( $orderid ) ) ) {
 					// send order to gateway
 					$body = '<' . $trans_type . '> 
 								<api-key>' . $APIKey . '</api-key>
@@ -1103,7 +1114,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 						$result = json_decode( $json, true );
 						WC_NMI_Logger::log( $json );
 					}
-				}
+				}*/
 				$order->save();
 
 			}
