@@ -54,6 +54,7 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		add_filter( 'woocommerce_subscription_payment_meta', array( $this, 'add_admin_change_payment_method_form' ), 10, 2 );
 		add_filter( 'woocommerce_subscriptions_update_payment_via_pay_shortcode', array( $this, 'maybe_update_all_subscriptions_payment_method' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
+		add_action( 'woocommerce_after_checkout_form', array( $this, 'checkout_scripts' ) );
 
 		if ( isset( $_GET['token-id'] ) && isset( $_GET['order'] ) && ! isset( $_GET['complete'] ) ) {
 			$this->successful_request( sanitize_text_field( $_GET['token-id'] ), sanitize_text_field( $_GET['order'] ) );
@@ -348,6 +349,41 @@ class NMI_GATEWAY_WOO extends WC_Payment_Gateway {
 		$nmi_params['is_checkout'] = ( is_checkout() && empty( $_GET['pay_for_order'] ) ) ? 'yes' : 'no'; // wpcs: csrf ok.
 
 		wp_localize_script( 'wc_nmi_checkout', 'wc_nmi_checkout_params', apply_filters( 'wc_nmi_checkout_params', $nmi_params ) );
+	}
+
+	/**
+	 * Scripts loaded at checkout page
+	 * We check if the cart is empty and apply other js changes
+	 * 
+	 */
+	public function checkout_scripts() {
+		$total = WC()->cart->get_cart_total();
+		if ( $total <= 0 ) {
+			?>
+			<script type="text/javascript">
+				jQuery( function( $ ) {
+					$('.woocommerce-checkout-payment').hide();
+					$('.place-order #place_order').html('<?php _e( 'Place Order' ); ?>');
+				});
+			</script>
+			<?php
+		} else {
+			?>
+			<script type="text/javascript">
+				jQuery( function( $ ) {
+					$('.woocommerce-checkout-payment').show();
+					$('.place-order #place_order').html('<?php _e( 'Pay Securely' ); ?>');
+				});
+			</script>
+			<?php
+		}
+		?>
+		<script type="text/javascript">
+			jQuery( function( $ ) {
+				$('.wdm-woocommerce-billing-heading h3').html('<?php esc_html_e( 'Billing &amp; Shipping', 'woocommerce' ); ?>');
+			});
+		</script>
+		<?php
 	}
 
 	/**
