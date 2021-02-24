@@ -6,7 +6,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Exit if accessed directly
 /*
 Plugin Name: NMI Gateway for WooCommerce
-Plugin URI: https://bizztoolz.com/plugins
 Description: Add the NMI Gateway for WooCommerce.
 Version: 1.0.0
 Author: Paul Kevin
